@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="th"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ChordPro → รูปภาพ</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#fafafa; --panel2:#f4f4f5; --line:#e7e7ea; --line2:#d4d4d8;
+  --text:#18181b; --muted:#71717a; --dim:#a1a1aa;
+  --accent:#2563eb; --accent-bg:#eff6ff; --chord:#b45309; --chord-bg:#fef3c7; --chord-line:#f59e0b;
+  --danger:#dc2626; --ok:#16a34a; --sel:#dbeafe;
+  --mono:'JetBrains Mono',Consolas,'Courier New',monospace;
+  --thai:'Sarabun','Noto Sans Thai','Leelawadee UI',Thonburi,Tahoma,sans-serif;
+  --efs:18px; --cell:13px; --pfs:18px; --barH:60px; --kb:0px; --ind:2.65em;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--thai);-webkit-text-size-adjust:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hide{display:none!important}
+.sp{flex:1}
+.muted{color:var(--muted);font-size:.86em}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg);flex-wrap:wrap}
+.logo{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:18px}
+.logo:hover{background:var(--panel2)}
+.fld-in{height:36px;border:1px solid transparent;border-radius:8px;padding:0 10px;background:transparent;outline:none;min-width:0}
+.fld-in:hover{border-color:var(--line)}
+.fld-in:focus{border-color:var(--accent);background:#fff}
+#t-title{font-size:18px;font-weight:700;width:clamp(140px,24vw,320px)}
+#t-artist{font-size:14px;color:var(--muted);width:clamp(110px,16vw,220px)}
+.tb{height:36px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.tb:hover{background:var(--panel2)}
+.tb.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.tb .k{font-family:var(--mono);font-weight:700;color:var(--chord)}
+.save-ind{font-size:12px;color:var(--dim);white-space:nowrap}
+
+/* ---------- icons (Material Symbols, cached offline) ---------- */
+.ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased;user-select:none;vertical-align:middle;width:1em;overflow:hidden}
+html:not(.ms-ok) .ms{font-size:0!important;width:auto}
+html:not(.ms-ok) .ms::before{content:attr(data-fb);font:600 15px var(--thai)}
+.mi .ms{font-size:19px;color:var(--muted)}
+/* ---------- popovers / menus ---------- */
+.pop{position:fixed;z-index:120;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.12);padding:12px;min-width:220px}
+.pop[hidden]{display:none}
+.pop h4{margin:2px 0 8px;font-size:12px;color:var(--muted);font-weight:600}
+.kgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:10px}
+.kb{height:34px;border-radius:7px;border:1px solid var(--line);background:#fff;font:700 13px var(--mono)}
+.kb:hover{border-color:var(--chord)}
+.kb.on{background:var(--chord);border-color:var(--chord);color:#fff}
+.menu{display:flex;flex-direction:column;min-width:230px;padding:6px}
+.mi{display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border:0;border-radius:8px;background:none;text-align:left;font-size:14px}
+.mi:hover{background:var(--panel2)}
+.mi .mk{margin-left:auto;font:12px var(--mono);color:var(--dim)}
+.mi-sep{height:1px;background:var(--line);margin:5px 4px}
+.adv-grid{display:grid;grid-template-columns:110px 170px;gap:8px 10px;align-items:center;font-size:13px}
+.adv-grid label{color:var(--muted)}
+.inp{height:36px;border:1px solid var(--line2);border-radius:8px;padding:0 10px;background:#fff;outline:none;width:100%}
+.inp:focus{border-color:var(--accent)}
+
+/* ---------- workspace ---------- */
+.workspace{flex:1;min-height:0;display:flex}
+.rail{width:52px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;background:var(--bg)}
+.rb{width:40px;height:40px;border-radius:10px;border:1px solid transparent;background:none;font-size:18px;color:var(--muted);display:grid;place-items:center}
+.rb:hover{background:var(--panel2);color:var(--text)}
+.rb.on{background:var(--accent);color:#fff}
+.rb:disabled{opacity:.3;cursor:default}
+.rsep{width:26px;height:1px;background:var(--line);margin:4px 0}
+#tip{position:fixed;z-index:150;max-width:280px;background:#18181b;color:#fafafa;border-radius:9px;padding:9px 11px;font-size:12.5px;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .12s}
+#tip.show{opacity:1}
+#tip b{font-size:13.5px}
+#tip .tk{margin-left:6px;font:700 11px var(--mono);background:#3f3f46;border-radius:4px;padding:1px 5px;color:#fde68a}
+#tip .td{display:block;margin-top:3px;color:#d4d4d8}
+.edwrap{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+.edscroll{flex:1;overflow:auto;position:relative;background:var(--panel)}
+.edinner{position:relative;padding:14px 0 40px;min-width:100%;width:max-content}
+#lines{user-select:none;-webkit-user-select:none}
+#ta{position:absolute;left:0;top:0;width:2px;height:28px;opacity:0;border:0;padding:0;margin:0;resize:none;overflow:hidden;font-size:16px;caret-color:transparent;background:transparent;color:transparent;z-index:-1;pointer-events:none;white-space:pre}
+
+/* ---------- section cards ---------- */
+.sec{margin:0 16px 14px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--gc);border-radius:12px;min-width:min(720px,calc(100vw - 120px))}
+.sec.dragging{opacity:.4}
+.sec.drop-before{box-shadow:0 -3px 0 var(--accent)}
+.sec.drop-after{box-shadow:0 3px 0 var(--accent)}
+.sh{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 4px;border-bottom:1px solid var(--line);position:sticky;left:0}
+.grip{cursor:grab;color:var(--dim);font-size:15px;padding:4px 6px;letter-spacing:-2px;touch-action:none;user-select:none}
+.grip:active{cursor:grabbing}
+.sname{height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:0 6px;font-weight:600;color:var(--gc);max-width:180px}
+.snum{font-weight:700;color:var(--gc);font-size:14px}
+.ib{width:30px;height:30px;border:0;border-radius:7px;background:none;color:var(--muted);font-size:14px;display:grid;place-items:center}
+.ib:hover{background:var(--panel2);color:var(--text)}
+.ib.del:hover{color:var(--danger)}
+.sb{padding:6px 0 8px}
+.ssum{padding:8px 14px;color:var(--dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pair{position:relative;padding:0 30px 0 12px}
+.pair.psel{background:var(--sel)}
+.row{display:flex;white-space:pre;position:relative}
+.crow{height:calc(var(--efs) * 1.45);font-family:var(--mono);font-weight:700;font-size:var(--efs);color:var(--chord);align-items:flex-end}
+.lrow{height:calc(var(--efs) * 2);font-family:var(--thai);font-size:var(--efs);align-items:center}
+.row.act{background:rgba(37,99,235,.045)}
+.crow.act{background:rgba(245,158,11,.08)}
+.row.rsel{background:var(--sel)}
+.c{flex:0 0 var(--cell);width:var(--cell);text-align:center;position:relative;line-height:1.35}
+.crow .c.ct{background:var(--chord-bg)}
+.crow .c.t0{border-radius:5px 0 0 5px}.crow .c.tl{border-radius:0 5px 5px 0}.crow .c.t0.tl{border-radius:5px}
+.crow .c.bar{color:var(--muted);background:var(--panel2)}
+.crow .c.tx{color:#0369a1;background:#e0f2fe;font-weight:500}
+.crow .c.chn{box-shadow:inset 0 -2px 0 var(--chord-line)}
+.crow .c.chn0::before{content:'';position:absolute;left:calc(var(--cell) * -1);width:var(--cell);bottom:0;height:2px;background:var(--chord-line)}
+.crow .c.caret{background:rgba(245,158,11,.3);box-shadow:inset 0 0 0 2px var(--chord-line);border-radius:4px}
+.lrow .c.guide{background:rgba(245,158,11,.18);box-shadow:inset 0 -3px 0 var(--chord-line);border-radius:3px}
+.vguide{position:absolute;top:0;bottom:0;width:var(--cell);border-left:1px dashed var(--chord-line);pointer-events:none}
+.lrow .c.lcaret::before{content:'';position:absolute;left:-1px;top:16%;bottom:16%;width:2px;background:var(--accent);border-radius:1px}
+.focused .lrow .c.lcaret::before{animation:blink 1.05s steps(1) infinite}
+.c.sel{background:var(--sel)!important}
+.c.caret,.c.lcaret{scroll-margin:60px 60px calc(var(--barH) + var(--kb) + 30px) 60px}
+@keyframes blink{50%{opacity:0}}
+.mode-move .crow .c.ct{cursor:grab}
+.mode-move #lines{touch-action:none}
+.pair.dragging .crow .c.ct{outline:1px dashed var(--chord-line)}
+.addsec{margin:0 16px 20px;display:flex;gap:8px}
+
+/* ---------- bottom bar ---------- */
+.bottombar{flex-shrink:0;border-top:1px solid var(--line);background:rgba(255,255,255,.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:8px 12px;z-index:30}
+.status{font-size:12px;color:var(--muted);padding:0 2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status b{color:var(--text)}
+.status .sc{font-family:var(--mono);color:var(--chord);font-weight:700}
+.bbrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bbrow+.bbrow{margin-top:6px}
+.bb{height:38px;min-width:40px;padding:0 11px;border-radius:9px;border:1px solid var(--line2);background:#fff;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;touch-action:manipulation}
+.bb:hover{background:var(--panel2)}
+.bb:active{transform:translateY(1px)}
+.bb.pad{font-family:var(--mono);font-weight:700;color:var(--chord);min-width:48px}
+.bb.pad small{font-family:var(--thai);font-weight:400;font-size:10px;color:var(--dim)}
+.bb.cust{border-style:dashed}
+.bb.mono{font-family:var(--mono);color:var(--chord)}
+.bb.warn{color:var(--danger)}
+.bb.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.bb.on{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.bb.more{font-size:18px;letter-spacing:1px}
+.bsep{width:1px;height:26px;background:var(--line);margin:0 2px}
+.chipsec{height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line2);border-left:4px solid var(--gc);background:#fff;font-size:13px;font-weight:600;white-space:nowrap;touch-action:none;user-select:none}
+.chipsec.cur{background:var(--accent-bg)}
+.chipsec.dragging{opacity:.5;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.chiprow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;padding:2px 0}
+.chiprow::-webkit-scrollbar{display:none}
+
+/* ---------- preview ---------- */
+.preview{width:44%;min-width:340px;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#fff}
+.pvbar{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{height:30px;padding:0 10px;border:0;background:#fff;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--text);color:#fff}
+.mini{height:30px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);background:#fff;font-size:13px;white-space:nowrap}
+.mini:hover{background:var(--panel2)}
+.mini.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.tpkey{font:700 13px var(--mono);color:var(--chord);min-width:70px;text-align:center}
+.pvscroll{flex:1;overflow:auto}
+.pv{font-family:var(--pvfont,var(--thai));font-size:var(--pfs);line-height:1.25;padding:22px 26px 80px;font-weight:700;color:#111}
+.pv-head{text-align:center;margin-bottom:6px}
+.pv-title{font-size:1.9em;line-height:1.2}
+.pv-artist{font-size:1.1em;color:#333;margin-top:2px}
+.pv-rule{border:0;border-top:3px solid #333;margin:12px 0 10px}
+.pv-meta{font-size:.9em;margin-bottom:12px}
+.pv-sec{position:relative;margin:0 0 1em;padding-left:calc(var(--ind) * var(--lv))}
+.pv-sec:hover{background:#fafafa;border-radius:8px}
+.pv-ctl{position:absolute;right:0;top:-4px;display:none;gap:3px;font-weight:400}
+.pv-sec:hover .pv-ctl,.pv-sec.touched .pv-ctl{display:flex}
+.pv-ctl button{height:26px;min-width:26px;border-radius:6px;border:1px solid var(--line2);background:#fff;font-size:12px}
+.pv-badge{display:inline-block;padding:1px 9px;border-radius:999px;font-size:.8em;color:#fff;background:var(--gc);margin:0 0 .3em;font-weight:600}
+.pv-badge.inl{margin:0 .6em 0 0;vertical-align:.1em}
+.pl{display:flex;flex-wrap:wrap;align-items:flex-end;margin:.08em 0}
+.ck{display:inline-flex;flex-direction:column;white-space:pre}
+.ck .ch{font-family:var(--pvcfont,var(--pvfont,var(--thai)));font-weight:700;padding-right:.45em;line-height:1.3;min-height:1.3em}
+.ck .ch .tx{color:#0369a1}
+.ck .ly{line-height:1.45}
+.pl.conly .ly{display:none}
+.pl.conly .ch{padding-right:.8em}
+.pv-star{margin-right:.35em}
+.pv-rep{margin:0 0 1em}
+.raw{margin:0;padding:18px 22px 80px;font:14px/1.65 var(--mono);white-space:pre-wrap;word-break:break-word;color:#27272a}
+.raw .r-ch{color:var(--chord);font-weight:700}
+.raw .r-dir{color:#0369a1}
+.raw .r-meta{color:#7c3aed}
+
+/* ---------- modals ---------- */
+.modal{position:fixed;inset:0;background:rgba(24,24,27,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100}
+.modal[hidden]{display:none}
+.dlg{width:min(600px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 30px 80px rgba(0,0,0,.18)}
+.dlg.wide{width:min(880px,100%)}
+.dlg.sm{width:min(440px,100%)}
+.dlg h3{margin:0 0 4px;font-size:19px}
+.dlg .sub{margin:0 0 14px;color:var(--muted);font-size:13.5px}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.btn{height:40px;padding:0 16px;border-radius:9px;border:1px solid var(--line2);background:#fff;font-weight:600}
+.btn:hover{background:var(--panel2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.left{margin-right:auto}
+.choice{display:flex;flex-direction:column;gap:10px}
+.copt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px 16px;border-radius:12px;border:1px solid var(--line2);background:#fff}
+.copt:hover{border-color:var(--accent);background:var(--accent-bg)}
+.copt b{font-size:15px}.copt span{font-size:13px;color:var(--muted)}
+.imp-ta{width:100%;min-height:300px;border-radius:10px;border:1px solid var(--line2);padding:12px;font:14px/1.5 var(--mono);resize:vertical;outline:none;white-space:pre;overflow:auto}
+.imp-ta:focus{border-color:var(--accent)}
+.imp-sum{font-size:13px;color:var(--accent);min-height:1.2em;margin-top:6px}
+.opts{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 2px;font-size:14px;color:var(--muted)}
+.opts label{display:flex;gap:6px;align-items:center}
+.errmsg{color:var(--danger);font-size:12.5px;min-height:1em}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.chip{height:30px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);background:#fff;font:600 13px var(--mono)}
+.chip.on{background:var(--chord);border-color:var(--chord);color:#fff}
+.pick{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:start;padding:6px 0;border-top:1px solid var(--line)}
+.pick-lbl{font-size:12px;font-weight:700;color:var(--muted);padding-top:10px}
+.chord-in{font-family:var(--mono);font-weight:700;color:var(--chord);font-size:22px;height:50px;text-align:center}
+.find-grid{display:grid;grid-template-columns:90px 1fr;gap:8px 10px;align-items:center;margin:8px 0}
+.find-grid label{font-size:13px;color:var(--muted)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0}
+.lib-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto;margin:10px 0}
+.lib-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.lib-row.cur{border-color:var(--accent);background:var(--accent-bg)}
+.lib-row .lt{flex:1;min-width:0}
+.lib-row .lt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-row .lt span{font-size:12px;color:var(--muted)}
+.exp-grid{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px}
+.exp-opts{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.exp-opts .grp{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.exp-opts .row2{display:grid;grid-template-columns:90px 1fr;gap:6px 8px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)}
+.exp-prev{background:var(--panel2);border-radius:10px;padding:10px;max-height:62vh;overflow:auto;text-align:center}
+.exp-prev canvas{width:100%;height:auto;box-shadow:0 2px 12px rgba(0,0,0,.12);background:#fff}
+.help-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:6px 0 12px}
+.help-grid kbd{font:12px var(--mono);background:var(--panel2);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:2px 6px;white-space:nowrap}
+.help-h{font-weight:700;margin:12px 0 4px;color:var(--accent)}
+
+#toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-20px);background:#18181b;color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.22s;z-index:200;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--danger)}
+
+
+/* ---------- v8 additions ---------- */
+.tb.ic,.mini.ic{padding:0;width:36px;justify-content:center;display:inline-grid;place-items:center}
+.mini.ic{width:30px}
+.mini.ic .ms{font-size:18px}
+.seg button .ms{font-size:18px}
+.seg button{display:inline-grid;place-items:center;min-width:34px}
+.ib .ms{font-size:18px}.rb .ms{font-size:22px}.logo .ms{font-size:20px}
+.bb .ms{font-size:20px}
+.bb.ic{padding:0;width:40px}
+.pv-ctl button{display:inline-grid;place-items:center}
+.pv-ctl button .ms{font-size:16px}
+.pv-ctl button.off{color:var(--dim)}
+.sname{display:inline-flex;align-items:center;gap:2px;cursor:pointer;padding:0 4px 0 8px;font:600 14px var(--thai)}
+.sname .ms{font-size:18px;color:var(--dim)}
+.sname.none{color:var(--dim);font-weight:500}
+.pk-head{font-weight:700;font-size:14px;margin:0 0 8px}.pk-head:empty{display:none}
+.skey{height:28px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:0 8px;font:600 12px var(--mono);color:var(--dim);white-space:nowrap}
+.skey:hover{border-color:var(--chord);color:var(--chord)}
+.skey.on{color:#fff;background:var(--chord);border-color:var(--chord)}
+.pv-key{display:inline-block;margin:0 0 .35em;padding:0 .55em;border:2px solid var(--chord);color:var(--chord);border-radius:6px;font-size:.78em;font-weight:700}
+.sgap{position:relative;height:16px;margin:-4px 0}
+.sgap-line{position:absolute;left:8px;right:8px;top:50%;border-top:2px dashed var(--accent);opacity:0;transition:opacity .12s}
+.sgap-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;border:1px solid var(--accent);background:#fff;color:var(--accent);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .12s;z-index:2}
+.sgap-btn .ms{font-size:18px}
+.sgap:hover .sgap-line,.sgap:hover .sgap-btn{opacity:1;pointer-events:auto}
+@media (hover:none){.sgap{height:6px;margin:0}.sgap-btn,.sgap-line{display:none}}
+.secname{width:280px;padding:10px;max-height:calc(100dvh - 16px);overflow:auto}
+.sn-list{max-height:min(260px,30vh)!important}
+.sn-in{width:100%}
+.sn-list{max-height:260px;overflow:auto;margin-top:6px;display:flex;flex-direction:column}
+.sn-list button{height:34px;border:0;background:none;border-radius:7px;text-align:left;padding:0 10px;display:flex;align-items:center;gap:8px;font-size:14px}
+.sn-list button.hi,.sn-list button:hover{background:var(--panel2)}
+.sn-list .dot{width:10px;height:10px;border-radius:3px}
+.sn-btns{display:flex;gap:6px;justify-content:flex-end;margin-top:8px}
+.sn-btns .btn{height:34px}
+.sn-hint{font-size:12px;color:var(--muted);margin-top:6px}
+.sn-copy{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;max-height:200px;overflow:auto}
+.sn-copy .lbl{font-size:12px;color:var(--muted);padding:4px 4px}
+.fontpop{width:300px;padding:8px;max-height:75vh;overflow:auto}
+.fontpop h4{margin:8px 6px 4px}
+.fontpop .fo{display:flex;align-items:center;width:100%;height:36px;border:0;background:none;border-radius:7px;padding:0 10px;font-size:16px;text-align:left;gap:8px}
+.fontpop .fo:hover{background:var(--panel2)}
+.fontpop .fo.on{background:var(--accent-bg);color:var(--accent)}
+.fontpop .fo small{margin-left:auto;font:11px var(--thai);color:var(--dim)}
+.fontpop .fsub{display:flex;align-items:center;justify-content:space-between;width:100%;height:38px;border:0;background:none;border-radius:7px;padding:0 10px;font-size:14px}
+.fontpop .fsub:hover{background:var(--panel2)}
+.fontpop .tabs{display:flex;gap:4px;margin:2px 2px 6px}
+.fontpop .tabs button{flex:1;height:30px;border:1px solid var(--line2);background:#fff;border-radius:7px;font-size:13px}
+.fontpop .tabs button.on{background:var(--text);color:#fff;border-color:var(--text)}
+.imp-tools{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.imp-eng{width:auto;height:40px}
+.ai-grid{display:grid;grid-template-columns:110px 1fr;gap:10px 10px;align-items:center;font-size:14px}
+.ai-grid label{color:var(--muted)}
+.ai-note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.55}
+.ai-note a{color:var(--accent)}
+.imp-prog{font-size:13px;color:var(--accent)}
+.imp-body{display:flex;gap:12px}
+.imp-body .imp-ta{flex:1;min-width:0}
+.imp-imgbox{flex:1;min-width:0;max-height:60vh;overflow:auto;border:1px solid var(--line2);border-radius:10px;background:var(--panel2)}
+.imp-imgbox img{width:100%;display:block}
+.imp-body.drag{outline:2px dashed var(--accent);outline-offset:4px}
+.exp-prevwrap{display:flex;flex-direction:column;gap:8px;min-width:0}
+.exp-fs{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.exp-fs .tpkey{min-width:44px}
+.fsa-steps{font-size:14px;line-height:1.7;padding-left:20px}
+.fsa-steps code{background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:12.5px;user-select:all}
+.lib-h{font-size:12px;font-weight:700;color:var(--muted);margin:10px 2px 2px}
+.save-ind.dirty{color:var(--chord)}
+@media (max-width:900px){ .imp-body{flex-direction:column} }
+@media (max-width:900px){
+  .topbar{gap:6px;padding:6px 8px}
+  #t-title{width:auto;flex:1 1 calc(100% - 52px);font-size:16px}
+  #t-artist{width:auto;flex:1 1 80px}
+  .save-ind{display:none}
+  .tb .tl{display:none}
+  .rail{width:44px}
+  .rb{width:36px;height:36px;font-size:16px}
+  .preview{position:fixed;inset:0;z-index:90;width:auto;min-width:0;border-left:0}
+  .bottombar{position:fixed;left:44px;right:0;bottom:0;padding-bottom:max(8px,env(safe-area-inset-bottom));border-left:1px solid var(--line)}
+  .edinner{padding-bottom:calc(var(--barH) + var(--kb) + 40px)}
+  .sec{margin:0 8px 12px;min-width:calc(100vw - 64px)}
+  .bbrow{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .bbrow::-webkit-scrollbar{display:none}
+  .exp-grid{grid-template-columns:1fr}
+  .pv{padding:16px 14px 80px}
+}
+@media print{
+  .topbar,.rail,.edwrap,.pvbar,#toast,#tip,.modal,.pop,.pv-ctl{display:none!important}
+  body,html{height:auto;overflow:visible}
+  .workspace{display:block}.preview{display:block!important;position:static;width:auto;border:0}
+  .pvscroll{overflow:visible}
+}
+
+/* ---------- mobile app ---------- */
+html,body{height:100%;margin:0;background:#fff;overflow:hidden}
+#app{height:100%}
+.pg{height:100%;display:flex;flex-direction:column}
+.pg[hidden]{display:none}
+.m-top{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--line);flex:none;min-height:56px;box-sizing:border-box}
+.m-top b{font-size:16px}
+.m-logo{width:34px;height:34px;border-radius:9px;background:var(--text);color:#fff;display:grid;place-items:center;font-size:18px}
+.m-ttl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.m-body{flex:1;overflow:auto;padding:14px 14px 10px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.m-lbl{font-size:13px;font-weight:700;color:var(--muted);margin-top:6px}
+.m-inp{height:44px;font-size:17px}
+.m-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.m-row .m-lbl{margin:0}
+.m-ta{flex:1;min-height:260px;font:15px/1.5 var(--mono);padding:10px;resize:none}
+.m-sum{font-size:13px;color:var(--muted);min-height:18px}
+.m-foot{padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));border-top:1px solid var(--line);flex:none}
+.m-big{width:100%;height:50px;font-size:17px;justify-content:center;display:flex;align-items:center;gap:6px}
+.m-tools{display:flex;align-items:center;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line);overflow-x:auto;flex:none;-webkit-overflow-scrolling:touch}
+.m-tools>*{flex:none}
+.m-pvscroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(30px + env(safe-area-inset-bottom))}
+.mini.ic,.btn{display:inline-flex;align-items:center;gap:5px}
+.mini.ic{width:32px;height:34px;justify-content:center;padding:0}
+.m-tools .tpkey{min-width:0;padding:0 4px}
+.mini.txt{font-weight:700;font-size:13px}
+.si{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:middle}
+.pv-ctl button .si{width:16px;height:16px}
+.fontpop .fsub .si{width:18px;height:18px}
+.m-out{position:fixed;inset:0;background:#111;z-index:80;display:flex;flex-direction:column}
+.m-out[hidden]{display:none}
+.m-out-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));background:#1d1d1f;color:#ddd}
+.m-out-bar .mini{background:#333;color:#fff;border-color:#444}
+.m-out-hint{font-size:13px}
+.m-out-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.m-out-scroll img{width:100%;display:block;-webkit-touch-callout:default;user-select:auto}
+.modal .dlg.wide{max-width:min(980px,96vw)}
+@media (max-width:700px){
+  .exp-grid{grid-template-columns:1fr!important}
+  .exp-prev{max-height:44vh}
+  .m-out-hint{font-size:12px}
+}
+.m-out-bar .btn{white-space:nowrap;flex:none}
+</style>
+</head><body>
+<div id="app">
+<section id="pg-in" class="pg">
+  <header class="m-top"><span class="m-logo">♪</span><b>ChordPro → รูปภาพ</b></header>
+  <div class="m-body">
+    <label class="m-lbl" for="in-title">ชื่อเพลง</label>
+    <input class="inp m-inp" id="in-title" placeholder="ชื่อเพลง" autocomplete="off">
+    <label class="m-lbl" for="in-artist">ศิลปิน</label>
+    <input class="inp m-inp" id="in-artist" placeholder="ศิลปิน" autocomplete="off">
+    <div class="m-row"><label class="m-lbl" for="in-cp">ChordPro</label><span class="sp"></span>
+      <button class="btn" id="in-open"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18V6a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v2"/><path d="M3 18l3-7h16l-3 7z"/></svg> เปิดไฟล์ .txt</button><input type="file" id="in-file" accept=".txt,.cho,.chopro,.chordpro,.crd,.pro,text/plain" hidden></div>
+    <textarea class="inp m-ta" id="in-cp" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="วางโค้ด ChordPro ที่นี่&#10;เช่น&#10;{title: ชื่อเพลง}&#10;{c: Verse}&#10;[C]แอบส่ง[F]ดอกไม้"></textarea>
+    <div class="m-sum" id="in-sum"></div>
+  </div>
+  <footer class="m-foot"><button class="btn pri m-big" id="in-next">ถัดไป <svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg></button></footer>
+</section>
+
+<section id="pg-pv" class="pg" hidden>
+  <header class="m-top">
+    <button class="mini ic" id="pv-back" data-tip="ย้อนกลับไปแก้ข้อความ"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4M10 6l-6 6 6 6"/></svg></button>
+    <b class="m-ttl" id="pv-ttl"></b><span class="sp"></span>
+    <button class="btn pri" id="pv-export" data-tip="ส่งออกเป็นรูปภาพ"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg> รูปภาพ</button>
+  </header>
+  <div class="m-tools">
+    <div class="seg" id="seg-mode"><button data-pmode="full" data-tip="แบบเต็ม">เต็ม</button><button data-pmode="compact" data-tip="แบบย่อ|ซ้ำท่อนด้วย * / **">ย่อ</button></div>
+    <button class="mini ic" data-act="tp-" data-tip="Transpose ลงครึ่งเสียง"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><span class="tpkey" id="tp-key">Key</span><button class="mini ic" data-act="tp+" data-tip="Transpose ขึ้นครึ่งเสียง"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="mini ic hide" id="tp-reset" data-act="tp-reset" data-tip="กลับคีย์เดิม"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 13A7.5 7.5 0 1 0 7 6.4"/><path d="M4 3.5V8h4.5"/></svg></button>
+    <button class="mini ic txt" id="b-font" data-tip="ฟอนต์">Aa</button>
+    <button class="mini ic txt" data-act="pfs-" data-tip="ตัวอักษรเล็กลง">A−</button><button class="mini ic txt" data-act="pfs+" data-tip="ตัวอักษรใหญ่ขึ้น">A+</button>
+  </div>
+  <div class="m-pvscroll" id="pvscroll"><div id="pv"></div></div>
+</section>
+</div>
+
+<div class="pop fontpop" id="p-font" hidden></div>
+
+<div class="modal" id="m-img" hidden><div class="dlg wide">
+  <h3>ส่งออกรูปภาพ (PNG)</h3>
+  <p class="sub" id="img-sub"></p>
+  <div class="exp-grid">
+    <div class="exp-opts">
+      <div class="grp"><label class="chk"><input type="checkbox" id="x-title" checked> แสดงชื่อเพลงและศิลปิน</label>
+        <label class="chk"><input type="checkbox" id="x-capo"> แสดง Capo</label>
+        <label class="chk"><input type="checkbox" id="x-tune"> แสดงการตั้งสาย</label></div>
+      <div class="grp"><label class="chk"><input type="checkbox" id="x-wm"> ใส่ลายน้ำ</label>
+        <div class="row2" id="wm-opts">
+          <span>ข้อความ</span><input class="inp" id="wm-text" placeholder="ชื่อวง / ชื่อช่อง">
+          <span>สี</span><input type="color" id="wm-color" value="#2563eb">
+          <span>ความหนา</span><select class="inp" id="wm-weight"><option value="300">บาง</option><option value="500" selected>ปกติ</option><option value="800">หนา</option></select>
+          <span>ความจาง</span><input type="range" id="wm-op" min="5" max="60" value="15">
+          <span>ขนาด</span><input type="range" id="wm-size" min="40" max="220" value="110">
+        </div></div>
+    </div>
+    <div class="exp-prevwrap"><div class="exp-fs"><span class="muted">ขนาดตัวอักษร</span><button class="mini ic txt" data-act="pfs-">A−</button><span id="img-fs" class="tpkey"></span><button class="mini ic txt" data-act="pfs+">A+</button></div><div class="exp-prev" id="img-prev"></div></div>
+  </div>
+  <div class="dlg-actions"><button class="btn" data-close>ยกเลิก</button><button class="btn pri" id="img-ok">สร้างรูป</button></div>
+</div></div>
+
+<div class="m-out" id="m-out" hidden>
+  <div class="m-out-bar"><button class="mini ic" id="out-close" data-tip="ปิด"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span class="m-out-hint">แตะค้างที่รูป → “บันทึกไปยังรูปภาพ”</span><span class="sp"></span><button class="btn pri" id="out-dl"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> บันทึก PNG</button></div>
+  <div class="m-out-scroll"><img id="out-img" alt="รูปคอร์ดเพลง"></div>
+</div>
+
+<div class="modal" id="m-fontadd" hidden><div class="dlg sm">
+  <h3>เพิ่มฟอนต์</h3>
+  <p class="sub">พิมพ์ชื่อฟอนต์จาก Google Fonts ตามที่เขียนบนเว็บ เช่น <b>Pridi</b>, <b>Athiti</b> — <a href="https://fonts.google.com/?subset=thai" target="_blank" rel="noopener">ดูฟอนต์ภาษาไทยใน Google Fonts ↗</a><br>ต้องต่ออินเทอร์เน็ตตอนเพิ่ม · ตอนไม่ต่อเน็ตอาจใช้ไม่ได้ ขึ้นกับแอพที่ใช้เปิดไฟล์นี้</p>
+  <div style="display:flex;gap:8px"><input class="inp" id="fa-name" placeholder="ชื่อฟอนต์ Google" autocomplete="off" spellcheck="false"><button class="btn pri" id="fa-google">เพิ่ม</button></div>
+  <div class="mi-sep" style="margin:14px 0"></div>
+  <p class="sub" style="margin:0 0 8px">หรืออัปโหลดไฟล์ฟอนต์ (.ttf / .otf / .woff / .woff2)</p>
+  <button class="btn" id="fa-file">เลือกไฟล์ฟอนต์…</button><input type="file" id="fa-in" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
+  <div class="imp-sum" id="fa-msg"></div>
+  <div class="dlg-actions"><button class="btn" data-close>ปิด</button></div>
+</div></div>
+<div id="toast"></div><div id="tip"></div>
+
+<script>(() => {'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const THAI_FONT = "'Sarabun',Thonburi,'Sukhumvit Set','Noto Sans Thai','Leelawadee UI',Tahoma,sans-serif";
+const isTouch = matchMedia('(pointer: coarse)').matches;
+const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const K_MOD = isMac ? '⌘' : 'Ctrl+';
+const narrow = () => true;
+/* small built-in icons (drawn in the Material style, always available offline) */
+const SVG_ICONS = {"visibility": "<path d=\"M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "visibility_off": "<path d=\"M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M3 3l18 18\"/>", "format_indent_decrease": "<path d=\"M21 5H3M21 19H3M21 10h-9M21 14h-9M7 9l-3 3 3 3\"/>", "format_indent_increase": "<path d=\"M21 5H3M21 19H3M21 10h-9M21 14h-9M4 9l3 3-3 3\"/>", "restart_alt": "<path d=\"M4.5 13A7.5 7.5 0 1 0 7 6.4\"/><path d=\"M4 3.5V8h4.5\"/>", "call_split": "<path d=\"M6 3v5l6 6v7M18 3v5l-4 4\"/><path d=\"M3 6l3-3 3 3M15 6l3-3 3 3\"/>", "chevron_right": "<path d=\"M9 6l6 6-6 6\"/>", "chevron_left": "<path d=\"M15 6l-6 6 6 6\"/>", "add": "<path d=\"M12 5v14M5 12h14\"/>", "remove": "<path d=\"M5 12h14\"/>", "close": "<path d=\"M6 6l12 12M18 6L6 18\"/>", "arrow_back": "<path d=\"M20 12H4M10 6l-6 6 6 6\"/>", "arrow_forward": "<path d=\"M4 12h16M14 6l6 6-6 6\"/>", "folder_open": "<path d=\"M3 18V6a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v2\"/><path d=\"M3 18l3-7h16l-3 7z\"/>", "image": "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2\"/><circle cx=\"9\" cy=\"9.5\" r=\"1.6\"/><path d=\"M4 17l5-5 4 4 3-3 4 4\"/>", "download": "<path d=\"M12 4v11M7 10l5 5 5-5M5 20h14\"/>"};
+const I = (n, fb = '') => SVG_ICONS[n] ? `<svg class="si" viewBox="0 0 24 24" aria-hidden="true">${SVG_ICONS[n]}</svg>` : `<span>${fb}</span>`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const MAXCOL = 400;
+
+/* ---- Grapheme clusters (Thai-safe) ---- */
+const HAS_SEG = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function';
+const graphemeSeg = HAS_SEG ? new Intl.Segmenter('th', { granularity: 'grapheme' }) : null;
+const wordSeg = HAS_SEG ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+// Fallback: base char + any combining marks (Thai above/below vowels, tone marks, SARA AM)
+const FALLBACK_RE = /[^\p{M}ำ][\p{M}ำ]*|[\p{M}ำ]+/gu;
+const gCache = new Map();
+function graphemes(s) {
+  if (!s) return [];
+  let g = gCache.get(s);
+  if (g) return g;
+  g = graphemeSeg ? Array.from(graphemeSeg.segment(s), x => x.segment) : (s.match(FALLBACK_RE) || []);
+  if (gCache.size > 4000) gCache.clear();
+  gCache.set(s, g);
+  return g;
+}
+const gLen = s => graphemes(s).length;
+const isMarkCp = cp => /[\p{M}ำ]/u.test(cp);
+function expandTabs(s, size = 4) {
+  if (s.indexOf('\t') < 0) return s;
+  let out = '', col = 0;
+  for (const g of graphemes(s)) {
+    if (g === '\t') { const n = size - (col % size); out += ' '.repeat(n); col += n; }
+    else { out += g; col++; }
+  }
+  return out;
+}
+
+/* ---- Music theory ---- */
+const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const KEY_ROOTS  = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];   // major key names
+const MINOR_NAME = ['C','C#','D','Eb','E','F','F#','G','G#','A','Bb','B'];   // minor key roots
+const NOTE_IDX = {C:0,'B#':0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,Fb:4,'E#':5,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11,Cb:11};
+function parseKey(k) {
+  const m = /^\s*([A-G][#b]?)\s*(m(?:in(?:or)?)?)?\s*$/i.exec(String(k || '').replace(/♯/g,'#').replace(/♭/g,'b'));
+  if (!m) return { idx: 0, minor: false, root: 'C' };
+  const root = m[1][0].toUpperCase() + (m[1][1] || '');
+  const idx = NOTE_IDX[root];
+  return idx === undefined ? { idx: 0, minor: false, root: 'C' } : { idx, minor: !!m[2], root };
+}
+const keyName = (idx, minor) => minor ? MINOR_NAME[idx] + 'm' : KEY_ROOTS[idx];
+function normKey(k) { const p = parseKey(k); return keyName(p.idx, p.minor); }
+function useFlats(k) {
+  const { minor, root } = parseKey(k);
+  if (root.includes('b')) return true;
+  if (root.includes('#')) return false;
+  return minor ? ['D','G','C','F'].includes(root) : root === 'F';
+}
+function transposeKey(k, n) { const p = parseKey(k); return keyName(((p.idx + n) % 12 + 12) % 12, p.minor); }
+function diatonic(k) {
+  const { idx, minor } = parseKey(k);
+  const N = useFlats(k) ? FLAT : SHARP;
+  const spec = minor
+    ? [[0,'m','i'],[2,'dim','ii°'],[3,'','III'],[5,'m','iv'],[7,'m','v'],[8,'','VI'],[10,'','VII']]
+    : [[0,'','I'],[2,'m','ii'],[4,'m','iii'],[5,'','IV'],[7,'','V'],[9,'m','vi'],[11,'dim','vii°']];
+  return spec.map(([iv, q, num]) => ({ name: N[(idx + iv) % 12] + q, num }));
+}
+const CHORD_PARTS = /^([A-G])([#b]?)(.*?)(?:\/([A-G])([#b]?))?$/;
+function transposeChord(ch, n, flats) {
+  if (!n || !CHORD_RE.test(ch)) return ch;
+  const m = CHORD_PARTS.exec(ch);
+  if (!m) return ch;
+  const N = flats ? FLAT : SHARP;
+  const t = i => N[((i + n) % 12 + 12) % 12];
+  let out = t(NOTE_IDX[m[1] + m[2]]) + m[3];
+  if (m[4]) out += '/' + t(NOTE_IDX[m[4] + m[5]]);
+  return out;
+}
+const CHORD_RE = /^(?:N\.?C\.?|[A-G][#b]?(?:maj|min|mi|ma|dim|aug|sus|add|alt|m|M|°|ø|o|\+|-|\d|\(|\)|#|b|\^|Δ|,)*(?:\/[A-G][#b]?)?)$/;
+const BAR_SYMS = new Set(['|','||','|:',':|','/','//','///','-','--','%',':','.','..','...','*']);
+const isChordName = s => CHORD_RE.test(s);
+const isBar = s => BAR_SYMS.has(s);
+
+/* ---- Line model helpers ---- */
+// line = { lyrics: string, chords: [{col, text}] }  (col = grapheme column)
+const mkLine = (lyrics = '', chords = []) => ({ lyrics, chords });
+const DIR_RE = /^\s*\{[^{}]*\}\s*$/;
+const isDirective = l => !l.chords.length && DIR_RE.test(l.lyrics);
+const isEmptyLine = l => !l.chords.length && !l.lyrics.trim();
+const tlen = t => gLen(t.text);
+const chordEnd = l => l.chords.reduce((m, t) => Math.max(m, t.col + tlen(t)), 0);
+const chordAt = (l, c) => l.chords.find(t => t.col <= c && c < t.col + tlen(t));
+/* Data model: head token .col = ANCHOR (grapheme index in the lyrics the chord sits before).
+   A token with chain:true is chained to the token before it: same anchor, drawn right after it,
+   compiles to  [A] [B] [C]lyric.  In the editor, lyrics get a display-only gap at a chained anchor
+   so the anchor syllable sits under the LAST chord of the group.
+   normalizeChords() keeps groups from overlapping on screen and sets .vc (visual column, no pending gap). */
+function chordGroups(ch) {
+  const groups = [];
+  for (const t of ch) { if (t.chain && groups.length) groups[groups.length - 1].push(t); else { if (t.chain) delete t.chain; groups.push([t]); } }
+  return groups;
+}
+function normalizeChords(ch) {
+  for (let k = ch.length - 1; k >= 0; k--) if (!ch[k].text) ch.splice(k, 1);
+  const groups = chordGroups(ch);
+  groups.sort((a, b) => a[0].col - b[0].col);
+  ch.length = 0; groups.forEach(g => ch.push(...g));
+  let shift = 0, prevEnd = -1;
+  for (const grp of groups) {
+    const head = grp[0];
+    if (head.col < 0) head.col = 0;
+    const minStart = prevEnd < 0 ? 0 : prevEnd + 1;
+    if (head.col + shift < minStart) head.col = minStart - shift;
+    head.col = Math.min(head.col, MAXCOL);
+    let v = head.col + shift;
+    for (const t of grp) { t.col = head.col; t.vc = v; v += tlen(t) + 1; }
+    const last = grp[grp.length - 1];
+    prevEnd = last.vc + tlen(last); shift += last.vc - head.vc;
+  }
+  return ch;
+}
+const groupHead = (ch, t) => { let k = ch.indexOf(t); while (k > 0 && ch[k].chain) k--; return ch[k]; };
+function removeToken(line, t) {
+  const k = line.chords.indexOf(t); if (k < 0) return;
+  const next = line.chords[k + 1];
+  if (next && next.chain && !t.chain) { delete next.chain; next.col = t.col; }   // promote next to group head
+  line.chords.splice(k, 1); normalizeChords(line.chords);
+}
+function dirInfo(text) {
+  const m = /^\s*\{\s*([a-zA-Z_]+)\s*(?::\s*(.*?))?\s*\}\s*$/.exec(text);
+  return m ? { name: m[1].toLowerCase(), val: (m[2] || '').trim() } : { name: '', val: '' };
+}
+const COMMENT_DIRS = ['c','comment','ci','comment_italic','cb','comment_box','highlight'];
+const INSTRU_RE = /intro|instru|solo|outro|interlude|ดนตรี|โซโล|อินโทร|จบ|break|ending/i;
+
+/* ---- Compiler: dual-layer -> ChordPro ---- */
+function compileLine(line, n = 0, flats = false) {
+  if (isDirective(line)) return line.lyrics.trim();
+  if (!line.chords.length) return line.lyrics.replace(/\s+$/, '');
+  const g = graphemes(line.lyrics);
+  let s = '', pos = 0;
+  for (const t of line.chords) {
+    if (t.chain) { s += ' [' + transposeChord(t.text, n, flats) + ']'; continue; }
+    if (t.col <= g.length) { s += g.slice(pos, t.col).join(''); }
+    else { s += g.slice(pos).join('') + ' '.repeat(t.col - Math.max(pos, g.length)); }
+    pos = t.col;
+    s += '[' + transposeChord(t.text, n, flats) + ']';
+  }
+  if (pos < g.length) s += g.slice(pos).join('');
+  return s.replace(/\s+$/, '');
+}
+/* ---- ChordPro parser -> dual-layer ---- */
+function trimBlankEdges(lines) {
+  while (lines.length && isEmptyLine(lines[0])) lines.shift();
+  while (lines.length && isEmptyLine(lines[lines.length - 1])) lines.pop();
+  return lines;
+}
+function parseChordPro(text) {
+  const meta = {}, lines = [];
+  let stats = { chordLines: 0, lyricLines: 0, tags: 0 };
+  for (let raw of text.replace(/\r\n?/g, '\n').split('\n')) {
+    raw = expandTabs(raw).replace(/\s+$/, '');
+    const t = raw.trim();
+    if (t.startsWith('#')) continue;
+    if (DIR_RE.test(t)) {
+      const { name, val } = dirInfo(t);
+      if (name === 'title' || name === 't') { meta.title = val; continue; }
+      if (name === 'artist') { meta.artist = val; continue; }
+      if ((name === 'subtitle' || name === 'st') && !meta.artist) { meta.artist = val; continue; }
+      if (name === 'key' && !meta.key && !lines.some(l => !isDirective(l) && !isEmptyLine(l))) { meta.key = val; continue; }   // later {key} = key change mid-song
+      lines.push(mkLine('{' + (name || '') + (val ? ': ' + val : '') + '}')); stats.tags++;
+      continue;
+    }
+    let lyr = ''; const chords = []; const re = /\[([^\]]*)\]/g; let last = 0, m, prevEnd = -1;
+    const hasLyr = raw.replace(/\[[^\]]*\]/g, '').trim() !== '';
+    while ((m = re.exec(raw))) {
+      const seg = raw.slice(last, m.index);
+      const txt = m[1].trim();
+      const chain = hasLyr && chords.length && prevEnd === last && seg === ' ';
+      if (!chain) lyr += seg;
+      last = m.index + m[0].length;
+      if (txt) { const t = { col: gLen(lyr), text: txt }; if (chain) t.chain = true; chords.push(t); prevEnd = last; }
+    }
+    lyr += raw.slice(last);
+    if (!lyr.trim()) lyr = '';
+    if (chords.length) stats.chordLines++; if (lyr) stats.lyricLines++;
+    lines.push(mkLine(lyr, normalizeChords(chords)));
+  }
+  return { meta, lines: trimBlankEdges(lines), stats, format: 'chordpro' };
+}
+
+/* ---- Chord-over-lyrics importer ---- */
+const LABEL_RE = /^\s*[\[\(\*\-=#>~]*\s*(pre[\s-]?chorus|intro|อินโทร|verse|chorus|hook|ท่อนฮุก|ท่อนฮุค|ฮุก|ฮุค|bridge|ท่อนแยก|solo|โซโล่|โซโล|instrumental|instrument|instru|ท่อนดนตรี|ดนตรี|interlude|ท่อนพัก|outro|ending|coda|เอาท์โทร|ท่อนจบ|จบ)\.?\s*(\d*)\s*[\]\)\*\-=<~]*\s*([:：]|-{1,2}|=)?\s*/i;
+function canonLabel(w) {
+  const x = w.toLowerCase().replace(/\s+/g, '');
+  if (/^pre-?chorus$/.test(x)) return 'Pre-Chorus';
+  if (x === 'intro' || x === 'อินโทร') return 'Intro';
+  if (x === 'verse') return 'Verse';
+  if (x === 'chorus') return 'Chorus';
+  if (/^(hook|ท่อนฮุก|ท่อนฮุค|ฮุก|ฮุค)$/.test(x)) return 'Hook';
+  if (x === 'bridge' || x === 'ท่อนแยก') return 'Bridge';
+  if (/^(solo|โซโล่|โซโล)$/.test(x)) return 'Solo';
+  if (/^(instrumental|instrument|instru|ท่อนดนตรี|ดนตรี)$/.test(x)) return 'Instru';
+  if (x === 'interlude' || x === 'ท่อนพัก') return 'Interlude';
+  return 'Outro';
+}
+const REPEAT_IN_LINE = /\(\s*\d+\s*(?:times?|รอบ|ครั้ง)\s*\)|\(\s*(?:ซ้ำ|repeat)[^)]*\)|\[\s*(?:ซ้ำ|repeat)[^\]]*\]|(?<=^|\s)\(?[x×X]\s?\d+\)?(?=\s|$)|(?<=^|\s)\*\s?\d+(?=\s|$)|ซ้ำ.*$/gi;
+function analyzeChordLine(raw) {
+  if (!raw || !raw.trim()) return null;
+  raw = raw.replace(/♯/g, '#').replace(/♭/g, 'b');
+  const repeats = [];
+  // pull repeat markers out, keeping column widths intact
+  raw = raw.replace(REPEAT_IN_LINE, m => { repeats.push(m.trim()); return ' '.repeat(gLen(m)); });
+  // "( G )" → "(G)" keeping the column of the chord
+  raw = raw.replace(/\(\s+([^()\s]+)\s*\)|\(([^()\s]+)\s+\)/g, (m, a, b) => { const x = '(' + (a || b) + ')'; return x + ' '.repeat(Math.max(0, m.length - x.length)); });
+  const toks = []; const re = /\|\||\|:|:\||\||[^\s|]+/g; let m;
+  while ((m = re.exec(raw))) toks.push({ col: gLen(raw.slice(0, m.index)), text: m[0] });
+  if (!toks.length) return null;
+  let chordCount = 0; const chords = [];
+  for (const t of toks) {
+    const inner = t.text.replace(/^\((.+)\)$/, '$1');
+    if (isChordName(inner)) { chordCount++; chords.push({ col: t.col, text: inner }); }
+    else if (isBar(t.text)) chords.push({ col: t.col, text: t.text });
+    else return null;
+  }
+  if (!chordCount) return null;
+  return { chords, repeats };
+}
+function matchLabel(raw) {
+  const m = LABEL_RE.exec(raw);
+  if (!m) return null;
+  const rest = raw.slice(m[0].length);
+  // latin label must not run into another letter (e.g. "Chorusline")
+  if (/^[a-z]/i.test(m[1]) && /^[a-z]/i.test(rest) && !m[3]) return null;
+  if (rest.trim() && !m[3] && !analyzeChordLine(rest)) return null;
+  return { name: canonLabel(m[1]) + (m[2] ? ' ' + m[2] : ''), rest };
+}
+function isRepeatLine(t) {
+  return /^[\(\[]\s*(?:ซ้ำ|repeat)[^)\]]*[\)\]]$/i.test(t) ||
+         /^ซ้ำ\s*(?:ท่อน|\*|x|\d|hook|chorus|ฮุก|ฮุค|อีก|$)/i.test(t) ||
+         /^\(?\s*[x×]\s*\d+\s*\)?$/i.test(t) || /^\*\s*\d+$/.test(t);
+}
+function looksLikeChordPro(text) {
+  if (/^\s*\{\s*(?:title|t|artist|key|c|comment|soc|start_of_chorus|eoc|end_of_chorus|chorus|subtitle|st|capo|tempo)\b[^}]*\}\s*$/im.test(text)) return true;
+  const inline = (text.match(/\[[A-G][#b]?[^\]\s]{0,8}\][^\s\[\]]/g) || []).length;
+  return inline >= 2;
+}
+function importText(text) {
+  text = String(text || '').replace(/\r\n?/g, '\n').replace(/ /g, ' ').replace(/[​﻿]/g, '');
+  if (looksLikeChordPro(text)) return parseChordPro(text);
+  const src = text.split('\n').map(l => expandTabs(l));
+  const out = []; const stats = { chordLines: 0, lyricLines: 0, tags: 0 };
+  const lastBlank = () => !out.length || isEmptyLine(out[out.length - 1]);
+  const isStandalone = s => { const t = s.trim(); return DIR_RE.test(t) || isRepeatLine(t) || !!matchLabel(s); };
+  for (let i = 0; i < src.length; i++) {
+    let raw = src[i]; const t = raw.trim();
+    if (!t) { if (!lastBlank()) out.push(mkLine('')); continue; }
+    if (DIR_RE.test(t)) { out.push(mkLine(t)); stats.tags++; continue; }
+    if (isRepeatLine(t)) { out.push(mkLine('{c: ' + t + '}')); stats.tags++; continue; }
+    const lab = matchLabel(raw); let fromLabel = false;
+    if (lab) {
+      if (!lastBlank()) out.push(mkLine(''));
+      out.push(mkLine('{c: ' + lab.name + '}')); stats.tags++;
+      if (!lab.rest.trim()) continue;
+      raw = lab.rest; fromLabel = true;
+      if (!analyzeChordLine(raw)) { out.push(mkLine(raw.trim())); stats.lyricLines++; continue; }
+    }
+    const cl = analyzeChordLine(raw);
+    if (cl) {
+      stats.chordLines++;
+      const chords = cl.chords.map(c => ({ ...c }));
+      const nx = src[i + 1];
+      let lyr = '';
+      if (!fromLabel && nx !== undefined && nx.trim() && !analyzeChordLine(nx) && !isStandalone(nx)) {
+        let lyrRaw = nx.replace(/\s+$/, ''); i++; stats.lyricLines++;
+        const lead = Math.min(lyrRaw.length - lyrRaw.trimStart().length, chords[0].col);
+        lyr = lyrRaw.slice(lead); chords.forEach(c => c.col -= lead);
+        // drop trailing "(ซ้ำ)"-style markers on lyric line into a tag
+        const rm = /\s*(\(\s*ซ้ำ[^)]*\)|\(?[x×]\s?\d+\)?)\s*$/i.exec(lyr);
+        if (rm && rm.index > 0) { cl.repeats.push(rm[1]); lyr = lyr.slice(0, rm.index); }
+      } else {
+        const lead = chords[0].col; chords.forEach(c => c.col -= lead);
+      }
+      out.push(mkLine(lyr, normalizeChords(chords)));
+      for (const r of cl.repeats) { out.push(mkLine('{c: ' + r + '}')); stats.tags++; }
+      continue;
+    }
+    out.push(mkLine(t)); stats.lyricLines++;
+  }
+  return { meta: {}, lines: trimBlankEdges(out), stats, format: 'chord-over-lyrics' };
+}
+function guessKey(lines) {
+  const counts = {}; let total = 0;
+  for (const l of lines) for (const c of l.chords) {
+    const m = CHORD_PARTS.exec(c.text); if (!m) continue;
+    const root = NOTE_IDX[m[1] + m[2]];
+    const q = /^(dim|°|o)/.test(m[3]) ? 'd' : /^m(?!aj)/.test(m[3]) ? 'm' : 'M';
+    counts[root + q] = (counts[root + q] || 0) + 1; total++;
+  }
+  if (!total) return null;
+  const first = lines.flatMap(l => l.chords).map(c => CHORD_PARTS.exec(c.text)).find(Boolean);
+  let best = null, bestScore = -1;
+  for (let r = 0; r < 12; r++) for (const minor of [false, true]) {
+    const ivs = minor ? [[0,'m'],[2,'d'],[3,'M'],[5,'m'],[7,'m'],[8,'M'],[10,'M'],[7,'M']] : [[0,'M'],[2,'m'],[4,'m'],[5,'M'],[7,'M'],[9,'m'],[11,'d']];
+    const set = new Set(ivs.map(([i, q]) => ((r + i) % 12) + q));
+    let s = 0; for (const [k, n] of Object.entries(counts)) if (set.has(k)) s += n;
+    s += (counts[r + (minor ? 'm' : 'M')] || 0) * 0.6;
+    if (first && NOTE_IDX[first[1] + first[2]] === r && (/^m(?!aj)/.test(first[3])) === minor) s += 0.9;
+    if (s > bestScore) { bestScore = s; best = keyName(r, minor); }
+  }
+  return best;
+}
+/* ---------- v7: section model ---------- */
+// song = { title, artist, key ('' = unset), meta:{time,tempo,capo,tuning}, sections:[{id,name,indent:null|0..3,collapsed,lines:[line]}] }
+let __uid = 0;
+const uid = () => 'x' + Date.now().toString(36) + (++__uid).toString(36);
+const SECTION_NAMES = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Post-Chorus', 'Bridge', 'Solo', 'Interlude', 'Outro', 'Ending'];
+function sectionBase(name) { return String(name || '').replace(/\s+\d+$/, '').trim(); }
+function sectionGroup(name) {
+  const b = sectionBase(name).toLowerCase().replace(/[\s_]+/g, '-');
+  if (!b) return 'none';
+  if (b === 'verse') return 'verse';
+  if (/^pre-?(chorus|hook)$/.test(b)) return 'pre';
+  if (/^(post-?)?(chorus|hook)$/.test(b)) return 'chorus';
+  if (/^(intro|instru|instrumental|solo|interlude|outro|ending|riff|fill|break|n\.?c\.?|ดนตรี)$/.test(b)) return 'music';
+  return 'other';
+}
+const GROUP_INDENT = { verse: 0, pre: 1, chorus: 2, music: 0, other: 0, none: 0 };
+const GROUP_COLOR = { verse: '#2f6fd6', pre: '#7a4fd1', chorus: '#d0632b', music: '#1f8f6a', other: '#6b7280', none: '#9ca3af' };
+const sectionIndent = s => (s.indent == null ? GROUP_INDENT[sectionGroup(s.name)] : s.indent);
+const mkSection = (name = '', lines) => ({ id: uid(), name, key: '', indent: null, showLabel: null, collapsed: false, lines: lines || [mkLine('')] });
+/** effective key of a section (its own key change, else the song key) */
+const secKey = (song, i) => (song.sections[i] && song.sections[i].key) || song.key || '';
+/** compact mode: is the section label shown? (user toggle, else music sections and sections without lyrics) */
+const labelDefault = s => sectionGroup(s.name) === 'music' || !sectionHasLyrics(s);
+const labelShown = s => (s.showLabel == null ? labelDefault(s) : !!s.showLabel);
+const sectionHasLyrics = s => s.lines.some(l => l.lyrics.trim());
+/** Display names: repeated verse-group names get numbers (Verse 1, Verse 2) unless the user typed a number. */
+function displayNames(song) {
+  const count = {}, seen = {};
+  song.sections.forEach(s => { if (sectionGroup(s.name) === 'verse' && !/\d$/.test(s.name)) count[s.name] = (count[s.name] || 0) + 1; });
+  return song.sections.map(s => {
+    if (count[s.name] > 1) { seen[s.name] = (seen[s.name] || 0) + 1; return s.name + ' ' + seen[s.name]; }
+    return s.name;
+  });
+}
+function repeatCount(t) {
+  let m;
+  if ((m = /[x×]\s*(\d+)/i.exec(t))) return +m[1];
+  if ((m = /(\d+)\s*(?:รอบ|times?)/i.exec(t))) return +m[1];
+  if (/ซ้ำ|repeat/i.test(t)) return 2;
+  return 0;
+}
+const TUNING_RE = /^(tune\s*to|drop\s+[a-g]|tuning|ตั้งสาย)/i;
+const BLOCK_NAME = { c: 'Chorus', chorus: 'Chorus', v: 'Verse', verse: 'Verse', b: 'Bridge', bridge: 'Bridge' };
+/** Convert the line list produced by parseChordPro / importText into sections. */
+function linesToSections(lines, meta = {}) {
+  const secs = [], marks = {};
+  let cur = null, started = false;
+  let keyNow = '';
+  const open = name => { cur = mkSection(name, []); cur.key = keyNow; secs.push(cur); return cur; };
+  const addTimes = n => {
+    const tgt = cur && ([...cur.lines].reverse().find(l => l.chords.length) || cur.lines[cur.lines.length - 1]);
+    if (!tgt) return;
+    const lo = tgt.chords.reduce((m, t) => Math.max(m, t.col), 0);
+    tgt.chords.push({ col: Math.max(gLen(tgt.lyrics), lo + 1), text: `(${n} times)` }); normalizeChords(tgt.chords);
+  };
+  for (const line of lines) {
+    if (isDirective(line)) {
+      const { name, val } = dirInfo(line.lyrics); let m;
+      if (COMMENT_DIRS.includes(name)) {
+        if (!started && TUNING_RE.test(val)) { meta.tuning = val; continue; }
+        const rc = repeatCount(val);
+        if (rc && val.length < 24 && !/^(intro|verse|chorus|hook|solo|instru|outro|bridge)/i.test(val)) { addTimes(rc); continue; }
+        open(val); started = true; continue;
+      }
+      if (name === 'key') { keyNow = val ? normKey(val) : ''; if (cur && !cur.lines.length) cur.key = keyNow; else cur = null; continue; }
+      if (['capo', 'tempo', 'time'].includes(name)) { meta[name] = val; continue; }
+      if (name === 'meta' && /^tuning\s+/i.test(val)) { meta.tuning = val.replace(/^tuning\s+/i, ''); continue; }
+      if ((m = /^(?:start_of_(\w+)|so([cvb]))$/.exec(name))) { open(val || BLOCK_NAME[m[1] || m[2]] || ''); started = true; continue; }
+      if (/^(?:end_of_\w+|eo[cvbtg])$/.test(name)) { cur = null; continue; }
+      if (name === 'chorus') { open('Chorus'); started = true; continue; }
+      continue;
+    }
+    // a blank line ends a section — except inside a section marked with * (web sheets often leave gaps there)
+    if (isEmptyLine(line)) { if (cur && cur.lines.length && !Object.values(marks).includes(cur)) cur = null; continue; }
+    const t = line.lyrics.trim();
+    const rep = !line.chords.length && /^\(?\s*(\*+(?:\s*,\s*\*+)*)\s*\)?$/.exec(t);
+    if (rep) {                                  // "( * , ** )" -> repeat the marked sections
+      for (const st of rep[1].split(',').map(x => x.trim())) { const src = marks[st]; if (src) secs.push({ ...JSON.parse(JSON.stringify(src)), id: uid() }); }
+      cur = null; continue;
+    }
+    const sm = /^(\s*)(\*+)\s*/.exec(line.lyrics);
+    if (sm && t.startsWith('*')) {             // "* lyric" marks the start of a section that repeats later
+      const cut = gLen(sm[0]);
+      line.lyrics = line.lyrics.slice(sm[0].length);
+      line.chords.forEach(c => { if (!c.chain) c.col = Math.max(0, c.col - cut); }); normalizeChords(line.chords);
+      if (!cur || cur.lines.length) open('');
+      if (!marks[sm[2]]) marks[sm[2]] = cur;
+    }
+    if (!cur) open('');
+    cur.lines.push(line); started = true;
+  }
+  secs.forEach(s => { if (!s.lines.length) s.lines.push(mkLine('')); });
+  return secs.length ? secs : [mkSection('')];
+}
+function textToSong(text) {
+  const r = importText(text);
+  const meta = {};
+  const sections = linesToSections(r.lines, meta);
+  if (r.meta && r.meta.capo) meta.capo = r.meta.capo;
+  const sk = r.meta && r.meta.key ? normKey(r.meta.key) : '';
+  sections.forEach(x => { if (x.key === sk) x.key = ''; });
+  return { meta: r.meta || {}, songMeta: meta, sections, stats: r.stats, format: r.format };
+}
+
+/* ---------- compile (always full) ---------- */
+function compileSong(song, n = 0) {
+  const tk = song.key ? transposeKey(song.key, n) : '';
+  const fl = tk ? useFlats(tk) : n < 0;
+  const out = [];
+  if (song.title) out.push('{title: ' + song.title + '}');
+  if (song.artist) out.push('{artist: ' + song.artist + '}');
+  if (tk) out.push('{key: ' + tk + '}');
+  const m = song.meta || {};
+  if (+m.capo) out.push('{capo: ' + (+m.capo) + '}');
+  if (m.tempo) out.push('{tempo: ' + m.tempo + '}');
+  if (m.time) out.push('{time: ' + m.time + '}');
+  if (m.tuning) out.push('{c: ' + m.tuning + '}');
+  const names = displayNames(song);
+  let prevK = song.key || '';
+  song.sections.forEach((s, i) => {
+    out.push('');
+    const k = secKey(song, i);
+    if (k && k !== prevK) out.push('{key: ' + transposeKey(k, n) + '}');
+    prevK = k;
+    const sfl = k ? useFlats(transposeKey(k, n)) : fl;
+    if (names[i]) out.push('{c: ' + names[i] + '}');
+    s.lines.forEach(l => out.push(compileLine(l, n, sfl)));
+  });
+  return out.join('\n').replace(/^\n+/, '').replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '') + '\n';
+}
+
+/* ---------- preview model (shared by DOM preview and PNG export) ---------- */
+function sectionSig(s) {
+  return (s.key || '') + JSON.stringify(s.lines.filter(l => !isEmptyLine(l)).map(l => [l.lyrics.trim(), l.chords.map(c => c.text + '@' + c.col + (c.chain ? '~' : ''))]));
+}
+/** chunks for one line: [{chords:[...], text, extra}] */
+function lineChunks(line, n, fl) {
+  const g = graphemes(line.lyrics), Lg = g.length, ch = line.chords;
+  if (!ch.length) return { chordOnly: false, plain: true, chunks: [{ chords: [], text: line.lyrics }] };
+  const groups = []; ch.forEach(t => { if (t.chain && groups.length) groups[groups.length - 1].push(t); else groups.push([t]); });
+  const chunks = [];
+  if (groups[0][0].col > 0 && Lg) chunks.push({ chords: [], text: g.slice(0, groups[0][0].col).join(''), extra: 0 });
+  groups.forEach((gr, k) => {
+    const head = gr[0];
+    const next = k + 1 < groups.length ? groups[k + 1][0].col : Math.max(Lg, head.col);
+    const width = gr.reduce((s3, t) => s3 + tlen(t) + 1, -1);
+    chunks.push({ chords: gr.map(t => transposeChord(t.text, n, fl)), text: g.slice(head.col, next).join(''), extra: k + 1 < groups.length ? Math.max(0, next - Math.max(head.col + width, Lg)) : 0 });
+  });
+  return { chordOnly: !Lg || !line.lyrics.trim(), plain: false, chunks };
+}
+/** items: {kind:'section', name, group, indent, label:'above'|'inline'|null, star, lines:[...], index} | {kind:'repeat', text} */
+function previewModel(song, n, compact) {
+  const tk = song.key ? transposeKey(song.key, n) : '';
+  const fl = tk ? useFlats(tk) : n < 0;
+  const names = displayNames(song);
+  const sigs = song.sections.map(sectionSig), cnt = {}, star = {};
+  sigs.forEach(sg => { cnt[sg] = (cnt[sg] || 0) + 1; });
+  let nStar = 0; const seen = new Set();
+  sigs.forEach((sg, i) => { if (compact && cnt[sg] > 1 && !(sg in star) && sg !== '[]' && sectionHasLyrics(song.sections[i])) star[sg] = '*'.repeat(++nStar); });   // only sections with lyrics get * marks
+  const items = [];
+  let prevK = song.key || '';
+  const kc = song.sections.map((s, i) => { const k = secKey(song, i), ch = !!k && k !== prevK; prevK = k; return ch ? transposeKey(k, n) : ''; });
+  song.sections.forEach((s, i) => {
+    const sg = sigs[i], lyr = sectionHasLyrics(s);
+    if (compact && star[sg] && seen.has(sg) && !kc[i]) {
+      const last = items[items.length - 1];
+      if (last && last.kind === 'repeat') last.stars.push(star[sg]); else items.push({ kind: 'repeat', stars: [star[sg]], index: i });
+      return;
+    }
+    seen.add(sg);
+    const k = secKey(song, i), sfl = k ? useFlats(transposeKey(k, n)) : fl;
+    const lines = s.lines.filter(l => !isEmptyLine(l)).map(l => lineChunks(l, n, sfl));
+    const inl = !lyr || sectionGroup(s.name) === 'music';
+    const label = !names[i] ? null : (compact && !labelShown(s) ? null : (inl ? 'inline' : 'above'));
+    items.push({ kind: 'section', name: names[i], group: sectionGroup(s.name), indent: sectionIndent(s), label, labelOn: !!names[i] && (!compact || labelShown(s)), star: compact ? (star[sg] || '') : '', keyChange: kc[i], lines, index: i, hasLyrics: lyr });
+  });
+  items.forEach(it => { if (it.kind === 'repeat') it.text = '( ' + it.stars.join(' , ') + ' )'; });
+  return { key: tk, items };
+}
+function guessKeySong(song) { return guessKey(song.sections.flatMap(s => s.lines)); }
+
+/* =====================================================================
+   v8 — IndexedDB key/value store (handles, cached fonts & icons)
+   ===================================================================== */
+const idb = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('chordpro-studio', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => { const t = db.transaction('kv', mode), rq = fn(t.objectStore('kv')); t.oncomplete = () => res(rq ? rq.result : undefined); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); });
+  };
+  return {
+    get: k => tx('readonly', s => s.get(k)).catch(() => undefined),
+    set: (k, v) => tx('readwrite', s => s.put(v, k)).catch(e => console.warn('idb', e)),
+    del: k => tx('readwrite', s => s.delete(k)).catch(() => {})
+  };
+})();
+const hashStr = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + str.length; };
+
+/* =====================================================================
+   OFFLINE ASSETS — Material Symbols icons + Google fonts, cached once
+   ===================================================================== */
+const ICON_NAMES = /*__ICONS__*/[];
+const ICON_KEY = 'icons:' + hashStr(ICON_NAMES.join(','));
+const GF_BASE = ['Sarabun', 'Prompt', 'Kanit', 'Noto Sans Thai', 'IBM Plex Sans Thai', 'Mitr', 'Chakra Petch', 'Bai Jamjuree', 'K2D', 'Niramit'];
+const SYS_FONTS = ['Thonburi', 'Sukhumvit Set', 'Ayuthaya', 'Tahoma'];
+const UI_FONTS = [];                 // editor chord font, cached for offline use too
+const USER_FONTS_KEY = 'chordpro-studio:fonts';
+let userFonts = (() => { try { return JSON.parse(localStorage.getItem(USER_FONTS_KEY) || '[]').filter(f => f && f.family); } catch (e) { return []; } })();
+const saveUserFonts = () => { try { localStorage.setItem(USER_FONTS_KEY, JSON.stringify(userFonts)); } catch (e) {} };
+const fontReady = new Set(), fontLoading = new Map();
+const online = () => navigator.onLine !== false;
+
+function parseFaces(css) {
+  const out = [], re = /@font-face\s*\{([^}]*)\}/g; let m;
+  while ((m = re.exec(css))) {
+    const b = m[1], u = /url\(([^)]+)\)/.exec(b); if (!u) continue;
+    out.push({ url: u[1].replace(/['"]/g, ''), weight: ((/font-weight:\s*([^;]+);/.exec(b) || [])[1] || '400').trim(), style: ((/font-style:\s*([^;]+);/.exec(b) || [])[1] || 'normal').trim(), range: ((/unicode-range:\s*([^;]+);/.exec(b) || [])[1] || '').trim() });
+  }
+  return out;
+}
+async function fetchText(url) { const r = await fetch(url, { mode: 'cors' }); if (!r.ok) { const e = new Error('HTTP ' + r.status); e.status = r.status; throw e; } return r.text(); }
+async function fetchFaces(css) { const faces = parseFaces(css); if (!faces.length) throw new Error('ไม่พบไฟล์ฟอนต์'); for (const f of faces) { const r = await fetch(f.url, { mode: 'cors' }); if (!r.ok) throw new Error('HTTP ' + r.status); f.buf = await r.arrayBuffer(); delete f.url; } return faces; }
+const gfUrl = (family, axis) => `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replace(/%20/g, '+')}${axis}&display=swap`;
+async function downloadGoogleFont(family) {
+  let css;
+  try { css = await fetchText(gfUrl(family, ':wght@400;700')); }
+  catch (e) { if (e.status === 400) css = await fetchText(gfUrl(family, '')); else throw e; }   // font without weight 700
+  const faces = await fetchFaces(css);
+  await idb.set('font:' + family, faces);
+  return faces;
+}
+async function registerFaces(family, faces) {
+  for (const f of faces) {
+    const desc = { weight: f.weight || 'normal', style: f.style || 'normal' }; if (f.range) desc.unicodeRange = f.range;
+    const ff = new FontFace(family, f.buf, desc); await ff.load(); document.fonts.add(ff);
+  }
+}
+const isWebFont = fam => GF_BASE.includes(fam) || UI_FONTS.includes(fam) || userFonts.some(u => u.family === fam);
+/** make a font usable: cached copy first, else download (Google) — returns true when usable */
+function ensureFont(fam) {
+  if (!fam || !isWebFont(fam) || fontReady.has(fam)) return Promise.resolve(true);
+  if (fontLoading.has(fam)) return fontLoading.get(fam);
+  const p = (async () => {
+    try {
+      let faces = await idb.get('font:' + fam);
+      if (!faces) {
+        const u = userFonts.find(x => x.family === fam);
+        if (u && u.type === 'file') return false;
+        if (!online()) return false;
+        faces = await downloadGoogleFont(fam);
+      }
+      await registerFaces(fam, faces); fontReady.add(fam); return true;
+    } catch (e) { console.warn('font', fam, e); return false; }
+    finally { fontLoading.delete(fam); }
+  })();
+  fontLoading.set(fam, p); return p;
+}
+
+
+/* =====================================================================
+   TOOLTIPS — hover (mouse) / long-press (touch) on any [data-tip]
+   ===================================================================== */
+const tipEl = $('#tip');
+let tipTimer = null, tipFor = null, lpTimer = null, swallowClick = false;
+const KEY_LIKE = /^(⌘|⌥|⇧|⌃|Ctrl|Esc|Enter|Delete|Backspace|Space|Tab|←|→|↑|↓|F\d)/;
+const fmtKey = k => isMac ? k : k.replace(/⌘/g, 'Ctrl+').replace(/⌥/g, 'Alt+').replace(/⇧/g, 'Shift+');
+function tipTextOf(el) { let t = el.dataset.tip; if (!t && el.title) { t = el.title; el.dataset.tip = t; el.removeAttribute('title'); } return t || ''; }
+function showTip(el) {
+  const t = tipTextOf(el); if (!t) return;
+  const p = t.split('|'); let n = p[0], d = '', k = '';
+  if (p.length >= 3) { d = p[1]; k = p[2]; } else if (p.length === 2) { if (KEY_LIKE.test(p[1])) k = p[1]; else d = p[1]; }
+  tipEl.innerHTML = `<b>${esc(n)}</b>${k ? `<span class="tk">${esc(fmtKey(k))}</span>` : ''}${d ? `<span class="td">${esc(d)}</span>` : ''}`;
+  tipEl.classList.add('show');
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  let x, y;
+  if (el.closest('#rail')) { x = r.right + 10; y = r.top + r.height / 2 - h / 2; }
+  else { x = r.left + r.width / 2 - w / 2; y = r.bottom + 8; if (y + h > innerHeight - 6) y = r.top - h - 8; }
+  tipEl.style.left = clamp(x, 6, innerWidth - w - 6) + 'px'; tipEl.style.top = clamp(y, 6, innerHeight - h - 6) + 'px';
+  tipFor = el;
+}
+function hideTip() { clearTimeout(tipTimer); tipEl.classList.remove('show'); tipFor = null; }
+document.addEventListener('pointerover', e => {
+  const el = e.target.closest('[data-tip],button[title],.tb[title]');
+  if (el) tipTextOf(el);                                   // move native title into data-tip (no double tooltip)
+  if (e.pointerType !== 'mouse') return;
+  if (!el) { hideTip(); return; }
+  if (el === tipFor) return;
+  clearTimeout(tipTimer); tipTimer = setTimeout(() => showTip(el), tipEl.classList.contains('show') ? 60 : 380);
+});
+document.addEventListener('pointerout', e => { const el = e.target.closest('[data-tip]'); if (el && !el.contains(e.relatedTarget)) hideTip(); });
+document.addEventListener('pointerdown', e => {
+  hideTip();
+  if (e.pointerType === 'mouse') return;
+  const el = e.target.closest('[data-tip]'); if (!el || el.closest('[data-chip]') || el.closest('[data-grip]')) return;
+  const x = e.clientX, y = e.clientY;
+  clearTimeout(lpTimer);
+  lpTimer = setTimeout(() => { showTip(el); swallowClick = true; navigator.vibrate && navigator.vibrate(10); }, 500);
+  const cancel = ev => { if (ev.type === 'pointermove' && Math.hypot(ev.clientX - x, ev.clientY - y) < 10) return; clearTimeout(lpTimer); off(); };
+  const up = () => { clearTimeout(lpTimer); off(); if (swallowClick) setTimeout(hideTip, 1400); };
+  const off = () => { removeEventListener('pointermove', cancel); removeEventListener('pointerup', up); removeEventListener('pointercancel', cancel); };
+  addEventListener('pointermove', cancel); addEventListener('pointerup', up); addEventListener('pointercancel', cancel);
+}, true);
+document.addEventListener('click', e => { if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener('contextmenu', e => { if (e.target.closest('[data-tip]') && isTouch) e.preventDefault(); });
+
+/* =====================================================================
+   FONTS (per song) — preview + PNG
+   ===================================================================== */
+const fontStack = fam => fam ? `'${fam.replace(/'/g, '')}',${THAI_FONT}` : THAI_FONT;
+function songFontStack(chord) { const st = song.style || {}; return fontStack(chord ? (st.chordFont || st.font) : st.font); }
+function applySongFonts() {
+  pvEl.style.setProperty('--pvfont', songFontStack(false)); pvEl.style.setProperty('--pvcfont', songFontStack(true));
+  const st = song.style || {};
+  [st.font, st.chordFont].forEach(f => { if (f && isWebFont(f) && !fontReady.has(f)) ensureFont(f).then(ok => ok && schedulePreview()); });
+}
+async function loadSongFonts() {
+  const st = song.style || {};
+  await Promise.all([ensureFont(st.font), ensureFont(st.chordFont)]);
+  try { await Promise.all([document.fonts.load(`700 22px ${songFontStack(false)}`, 'กขA'), document.fonts.load(`700 22px ${songFontStack(true)}`, 'Am7'), document.fonts.load(`600 16px ${songFontStack(false)}`, 'Verse')]); } catch (e) {}
+}
+let fontTab = 'lyric';
+function renderFontPop() {
+  const st = song.style || (song.style = { font: '', chordFont: '' }), split = !!st.chordFont;
+  if (!split) fontTab = 'lyric';
+  const key = fontTab === 'chord' ? 'chordFont' : 'font', curF = st[key] || '';
+  const fo = (fam, label, note) => `<button class="fo${curF === fam ? ' on' : ''}" data-font="${esc(fam)}" style="font-family:${esc(fontStack(fam))}">${esc(label || fam)}${note ? `<small>${esc(note)}</small>` : ''}</button>`;
+  const webNote = fam => fontReady.has(fam) ? '' : (fontLoading.has(fam) ? 'กำลังโหลด…' : 'ยังไม่ได้โหลด');
+  let h = `<h4>ฟอนต์ของเพลงนี้ (พรีวิว + รูป PNG)</h4>`;
+  if (split) h += `<div class="tabs"><button class="${fontTab === 'lyric' ? 'on' : ''}" data-ftab="lyric">เนื้อร้อง</button><button class="${fontTab === 'chord' ? 'on' : ''}" data-ftab="chord">คอร์ด</button></div>`;
+  if (fontTab === 'lyric') h += fo('', 'ค่าเริ่มต้น (Sarabun)');
+  h += `<h4>ฟอนต์ภาษาไทยพื้นฐาน</h4>` + GF_BASE.map(f => fo(f, f, webNote(f))).join('');
+  h += `<h4>ฟอนต์ในเครื่อง</h4>` + SYS_FONTS.map(f => fo(f, f)).join('');
+  if (userFonts.length) h += `<h4>ฟอนต์ที่เพิ่มเอง</h4>` + userFonts.map(u => fo(u.family, u.family, u.type === 'google' ? webNote(u.family) || 'Google' : 'ไฟล์')).join('');
+  h += `<div class="mi-sep"></div><button class="fsub" data-fsplit>${I('call_split', '⑂')} ใช้ฟอนต์คอร์ดแยก<span class="muted">${split ? 'เปิดอยู่' : 'ปิด'} ${I('chevron_right', '›')}</span></button>`;
+  h += `<button class="fsub" data-fadd>${I('add', '＋')} เพิ่มฟอนต์…<span></span></button>`;
+  $('#p-font').innerHTML = h;
+}
+$('#b-font').addEventListener('click', e => { renderFontPop(); openPop('p-font', e.currentTarget, true); });
+$('#p-font').addEventListener('click', async e => {
+  const st = song.style;
+  const t = e.target.closest('[data-ftab]'); if (t) { fontTab = t.dataset.ftab; renderFontPop(); return; }
+  if (e.target.closest('[data-fsplit]')) { pushHistory('style'); if (st.chordFont) { st.chordFont = ''; fontTab = 'lyric'; } else { st.chordFont = st.font || 'Sarabun'; fontTab = 'chord'; } renderFontPop(); schedulePreview(); scheduleSave(); return; }
+  if (e.target.closest('[data-fadd]')) { closeAllPops(); $('#fa-msg').textContent = ''; $('#fa-name').value = ''; openModal('m-fontadd'); setTimeout(() => $('#fa-name').focus(), 30); return; }
+  const b = e.target.closest('[data-font]'); if (!b) return;
+  const fam = b.dataset.font;
+  if (fam && isWebFont(fam) && !fontReady.has(fam)) {
+    b.querySelector('small') && (b.querySelector('small').textContent = 'กำลังโหลด…');
+    if (!await ensureFont(fam)) { renderFontPop(); return toast(online() ? 'โหลดฟอนต์ ' + fam + ' ไม่สำเร็จ' : 'ต้องต่ออินเทอร์เน็ตเพื่อโหลดฟอนต์ ' + fam + ' ครั้งแรก', true); }
+  }
+  pushHistory('style'); st[fontTab === 'chord' ? 'chordFont' : 'font'] = fam;
+  if (fontTab === 'chord' && !fam) st.chordFont = st.font || 'Sarabun';
+  renderFontPop(); schedulePreview(); scheduleSave();
+});
+$('#fa-google').addEventListener('click', async () => {
+  const fam = $('#fa-name').value.trim().replace(/\s+/g, ' '); if (!fam) return;
+  if (isWebFont(fam) || SYS_FONTS.includes(fam)) { $('#fa-msg').textContent = 'มีฟอนต์ ' + fam + ' อยู่แล้ว'; return; }
+  if (!online()) { $('#fa-msg').textContent = 'ต้องต่ออินเทอร์เน็ตเพื่อดาวน์โหลดฟอนต์'; return; }
+  $('#fa-msg').textContent = 'กำลังดาวน์โหลด ' + fam + '…';
+  try {
+    const faces = await downloadGoogleFont(fam); await registerFaces(fam, faces); fontReady.add(fam);
+    userFonts.push({ family: fam, type: 'google' }); saveUserFonts();
+    $('#fa-msg').textContent = 'เพิ่ม ' + fam + ' แล้ว — เลือกใช้ได้จากปุ่มฟอนต์ในพรีวิว'; $('#fa-name').value = '';
+  } catch (e) { $('#fa-msg').textContent = e.status === 400 ? 'ไม่พบฟอนต์ “' + fam + '” ใน Google Fonts (ตรวจตัวพิมพ์เล็ก-ใหญ่ให้ตรงกับบนเว็บ)' : 'ดาวน์โหลดไม่สำเร็จ: ' + e.message; }
+});
+$('#fa-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#fa-google').click(); } });
+$('#fa-file').addEventListener('click', () => $('#fa-in').click());
+$('#fa-in').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = ''; const added = [];
+  for (const f of files) {
+    const fam = f.name.replace(/\.(ttf|otf|woff2?)$/i, '').replace(/[-_]+/g, ' ').trim();
+    try {
+      const buf = await f.arrayBuffer(); const ff = new FontFace(fam, buf); await ff.load(); document.fonts.add(ff); fontReady.add(fam);
+      await idb.set('font:' + fam, [{ buf, weight: 'normal', style: 'normal' }]);
+      if (!userFonts.some(u => u.family === fam)) userFonts.push({ family: fam, type: 'file' });
+      added.push(fam);
+    } catch (err) { toast('อ่านไฟล์ฟอนต์ ' + f.name + ' ไม่ได้', true); }
+  }
+  saveUserFonts();
+  if (added.length) $('#fa-msg').textContent = 'เพิ่มแล้ว: ' + added.join(', ');
+});
+
+function metaLine(opts) {
+  const m = song.meta, parts = [];
+  if (opts.capo && +m.capo) parts.push('Capo ' + (+m.capo));
+  if (opts.tune && m.tuning) parts.push(m.tuning);
+  return parts.join(' · ');
+}
+
+function buildPreview(n) {
+  const pm = previewModel(song, n, ui.compact);
+  let h = '<div class="pv">';
+  if (song.title || song.artist) h += `<div class="pv-head">${song.title ? `<div class="pv-title">${esc(song.title)}</div>` : ''}${song.artist ? `<div class="pv-artist">${esc(song.artist)}</div>` : ''}</div><hr class="pv-rule">`;
+  const ml = metaLine({ capo: true, tune: true }); if (ml) h += `<div class="pv-meta">${esc(ml)}</div>`;
+  for (const it of pm.items) {
+    if (it.kind === 'repeat') { h += `<div class="pv-rep">${esc(it.text)}</div>`; continue; }
+    const col = GROUP_COLOR[it.group];
+    const eye = ui.compact && it.name ? `<button data-lbl="${it.index}" class="${it.labelOn ? '' : 'off'}" data-tip="${it.labelOn ? 'ซ่อนป้ายชื่อท่อน' : 'แสดงป้ายชื่อท่อน'}|เฉพาะแบบย่อ">${I(it.labelOn ? 'visibility' : 'visibility_off', it.labelOn ? '👁' : '◌')}</button>` : '';
+    h += `<div class="pv-sec" style="--lv:${it.indent};--gc:${col}"><div class="pv-ctl">${eye}<button data-ind="${it.index}:-1" data-tip="เยื้องน้อยลง">${I('format_indent_decrease', '◂')}</button><button data-ind="${it.index}:1" data-tip="เยื้องมากขึ้น">${I('format_indent_increase', '▸')}</button><button data-ind="${it.index}:r" data-tip="กลับค่าเริ่มต้น">${I('restart_alt', '↺')}</button></div>`;
+    if (it.keyChange) h += `<div><span class="pv-key">Key ${esc(it.keyChange)}</span></div>`;
+    if (it.label === 'above') h += `<div><span class="pv-badge">${esc(it.name)}</span></div>`;
+    it.lines.forEach((ln, k) => {
+      const pre = (k === 0 && it.label === 'inline' ? `<span class="pv-badge inl">${esc(it.name)}</span>` : '') + (k === 0 && it.star ? `<span class="pv-star">${it.star}</span>` : '');
+      if (ln.plain) { h += `<div class="pl"><span class="ck"><span class="ly">${pre}${esc(ln.chunks[0].text) || '&nbsp;'}</span></span></div>`; return; }
+      h += `<div class="pl${ln.chordOnly ? ' conly' : ''}">`;
+      if (pre) h += ln.chordOnly ? `<span class="ck"><span class="ch">${pre}</span></span>` : `<span class="ck"><span class="ch">&nbsp;</span><span class="ly">${pre}</span></span>`;
+      ln.chunks.forEach(c => {
+        h += `<span class="ck"${c.extra > 0 ? ` style="min-width:${(c.extra * 0.55).toFixed(2)}em"` : ''}><span class="ch">${c.chords.length ? c.chords.map(x => `<span class="${isChordName(x) || isBar(x) ? '' : 'tx'}">${esc(x)}</span>`).join(' ') : '&nbsp;'}</span><span class="ly">${c.text ? esc(c.text) : '&nbsp;'}</span></span>`;
+      });
+      h += '</div>';
+    });
+    if (!it.lines.length && it.label === 'inline') h += `<div><span class="pv-badge">${esc(it.name)}</span></div>`;
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+
+
+const fileBase = () => ([song.title || 'ไม่มีชื่อเพลง', song.artist].filter(Boolean).join(' ')).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'ไม่มีชื่อเพลง';
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }
+function exportTxt() { download(new Blob([compileSong(song, ui.transpose)], { type: 'text/plain;charset=utf-8' }), fileBase() + '.txt'); toast('ดาวน์โหลด ' + fileBase() + '.txt'); }
+function doPrint() { const pv = ui.preview, v = ui.view; ui.preview = true; ui.view = 'rendered'; renderTop(); renderPreviewNow(); setTimeout(() => { window.print(); ui.preview = pv; ui.view = v; renderTop(); renderPreviewNow(); }, 60); }
+
+/* ---- PNG renderer (canvas) — same model as the Rendered preview ---- */
+const IMG_W = 1032, IMG_PAGE = 1376, IMG_MAXPX = 16_700_000;
+function imgOpts() {
+  return { title: $('#x-title').checked, capo: $('#x-capo').checked, tune: $('#x-tune').checked,
+    wm: $('#x-wm').checked && $('#wm-text').value.trim(), wmText: $('#wm-text').value.trim(), wmColor: $('#wm-color').value,
+    wmWeight: $('#wm-weight').value, wmOp: +$('#wm-op').value / 100, wmSize: +$('#wm-size').value };
+}
+function renderSongImage(opts) {
+  const FS = Math.round(22 * ui.pfs / 18), CH = FS * 1.2, LY = FS * 1.5, IND = FS * 2.65, M = 56, W = IMG_W, inner = W - M * 2;
+  const LF = songFontStack(false), CF = songFontStack(true);
+  const font = (w, s, chord) => `${w} ${s}px ${chord ? CF : LF}`;
+  const pm = previewModel(song, ui.transpose, ui.compact);
+  const mctx = document.createElement('canvas').getContext('2d');
+  const tw = (t, f) => { mctx.font = f; return mctx.measureText(t).width; };
+  const ops = []; let y = M;
+  if (opts.title && (song.title || song.artist)) {
+    if (song.title) { ops.push({ t: 'text', s: song.title, x: W / 2, y: y + 46, f: font(700, 46), al: 'center' }); y += 62; }
+    if (song.artist) { ops.push({ t: 'text', s: song.artist, x: W / 2, y: y + 26, f: font(600, 26), al: 'center' }); y += 40; }
+    y += 6; ops.push({ t: 'rule', y }); y += 22;
+  }
+  const ml = metaLine(opts);
+  if (ml) { ops.push({ t: 'text', s: ml, x: M, y: y + 20, f: font(700, 20) }); y += 36; }
+  const fC = font(700, FS - 1, true), fL = font(700, FS), fB = font(600, Math.max(12, FS - 6));
+  for (const it of pm.items) {
+    if (it.kind === 'repeat') { ops.push({ t: 'text', s: it.text, x: M, y: y + LY * 0.8, f: fL }); y += LY + FS * 0.8; continue; }
+    const x0 = M + it.indent * IND, maxX = M + inner;
+    if (it.keyChange) { const s = 'Key ' + it.keyChange, bw = tw(s, fB) + 20; ops.push({ t: 'kbadge', s, x: x0, y: y + 2, w: bw, h: FS + 4, f: fB }); y += FS + 12; }
+    if (it.label === 'above') { const bw = tw(it.name, fB) + 20; ops.push({ t: 'badge', s: it.name, x: x0, y: y + 2, w: bw, h: FS + 4, c: GROUP_COLOR[it.group], f: fB }); y += FS + 12; }
+    if (!it.lines.length && it.label === 'inline') { const bw = tw(it.name, fB) + 20; ops.push({ t: 'badge', s: it.name, x: x0, y: y + 2, w: bw, h: FS + 4, c: GROUP_COLOR[it.group], f: fB }); y += FS + 12; }
+    it.lines.forEach((ln, k) => {
+      let pre = '', badge = null;
+      if (k === 0 && it.label === 'inline') badge = it.name;
+      if (k === 0 && it.star) pre = it.star + ' ';
+      // build drawable chunks
+      const parts = [];
+      if (badge) parts.push({ badge, w: tw(badge, fB) + 20 + 10 });
+      if (ln.plain) parts.push({ c: '', l: pre + ln.chunks[0].text });
+      else { if (pre) parts.push({ c: '', l: pre }); ln.chunks.forEach(c => parts.push({ c: c.chords.join(' '), l: c.text, extra: c.extra })); }
+      const hasCh = !ln.plain, hasLy = !ln.chordOnly;
+      let x = x0, rowTop = y;
+      const rowH = (hasCh ? CH : 0) + (hasLy ? LY : 0) || LY;
+      const place = [];
+      for (const p of parts) {
+        const wC = p.c ? tw(p.c, fC) + FS * 0.45 : 0, wL = p.l ? tw(p.l, fL) : 0;
+        const w = p.badge ? p.w : Math.max(wC, wL, (p.extra || 0) * FS * 0.55) + (ln.chordOnly && p.c ? FS * 0.35 : 0);
+        if (x + w > maxX && x > x0) { y += rowH; x = x0; }
+        place.push({ p, x, y }); x += w;
+      }
+      for (const q of place) {
+        const cy = q.y + (hasCh ? CH * 0.82 : 0), ly = q.y + (hasCh ? CH : 0) + LY * 0.78;
+        if (q.p.badge) ops.push({ t: 'badge', s: q.p.badge, x: q.x, y: q.y + (hasCh ? CH - FS * 0.95 : 4), w: q.p.w - 10, h: FS + 4, c: GROUP_COLOR[it.group], f: fB });
+        if (q.p.c) ops.push({ t: 'text', s: q.p.c, x: q.x, y: cy, f: fC });
+        if (q.p.l && hasLy) ops.push({ t: 'text', s: q.p.l, x: q.x, y: ly, f: fL });
+        if (q.p.l && !hasLy && !hasCh) ops.push({ t: 'text', s: q.p.l, x: q.x, y: q.y + LY * 0.78, f: fL });
+      }
+      y += rowH + 2;
+    });
+    y += FS * 0.9;
+  }
+  const H = Math.ceil(y + M);
+  let scale = 1; if (W * H > IMG_MAXPX) scale = Math.sqrt(IMG_MAXPX / (W * H));
+  const cv = document.createElement('canvas'); cv.width = Math.floor(W * scale); cv.height = Math.floor(H * scale);
+  const ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.textBaseline = 'alphabetic';
+  for (const o of ops) {
+    if (o.t === 'rule') { ctx.fillStyle = '#333'; ctx.fillRect(M - 16, o.y, W - (M - 16) * 2, 4); continue; }
+    if (o.t === 'kbadge') { ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x, o.y, o.w, o.h, 6) : ctx.rect(o.x, o.y, o.w, o.h); ctx.stroke(); ctx.fillStyle = '#b45309'; ctx.font = o.f; ctx.textAlign = 'left'; ctx.fillText(o.s, o.x + 10, o.y + o.h * 0.78); continue; }
+    if (o.t === 'badge') { ctx.fillStyle = o.c; const r = o.h / 2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(o.x, o.y, o.w, o.h, r) : ctx.rect(o.x, o.y, o.w, o.h); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = o.f; ctx.textAlign = 'left'; ctx.fillText(o.s, o.x + 10, o.y + o.h * 0.78); continue; }
+    ctx.fillStyle = '#111'; ctx.font = o.f; ctx.textAlign = o.al || 'left'; ctx.fillText(o.s, o.x, o.y);
+  }
+  if (opts.wm) {
+    ctx.save(); ctx.globalAlpha = opts.wmOp; ctx.fillStyle = opts.wmColor; ctx.font = `${opts.wmWeight} ${opts.wmSize}px ${LF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const ys = []; for (let cy = IMG_PAGE / 2; cy < H; cy += IMG_PAGE) ys.push(cy); if (!ys.length) ys.push(H / 2);
+    for (const cy of ys) { ctx.save(); ctx.translate(W / 2, cy); ctx.rotate(-Math.PI / 6); ctx.fillText(opts.wmText, 0, 0); ctx.restore(); }
+    ctx.restore();
+  }
+  return { canvas: cv, scaled: scale < 1, H };
+}
+/* =====================================================================
+   MOBILE: ChordPro → image.  Pages: input (title / artist / ChordPro) → preview → PNG
+   ===================================================================== */
+const SET_KEY = 'chordpro-mobile:settings';
+let song = { title: '', artist: '', key: '', meta: { time: '', tempo: '', capo: '', tuning: '' }, style: { font: '', chordFont: '' }, sections: [] };
+const ui = { compact: false, transpose: 0, pfs: 18, view: 'rendered', preview: true };
+const pvEl = $('#pv');
+const pushHistory = () => {};
+function schedulePreview() { requestAnimationFrame(renderPreview); }
+function scheduleSave() { saveSettings(); }
+
+/* ---------- settings (image options, font, size) ---------- */
+const IMG_FIELDS = ['x-title', 'x-capo', 'x-tune', 'x-wm', 'wm-text', 'wm-color', 'wm-weight', 'wm-op', 'wm-size'];
+function saveSettings() {
+  try {
+    const img = {}; IMG_FIELDS.forEach(id => { const el = $('#' + id); img[id] = el.type === 'checkbox' ? el.checked : el.value; });
+    localStorage.setItem(SET_KEY, JSON.stringify({ img, style: song.style, pfs: ui.pfs }));
+  } catch (e) {}
+}
+function loadSettings() {
+  try {
+    const o = JSON.parse(localStorage.getItem(SET_KEY) || 'null'); if (!o) return;
+    if (o.img) IMG_FIELDS.forEach(id => { const el = $('#' + id), v = o.img[id]; if (v == null) return; if (el.type === 'checkbox') el.checked = !!v; else el.value = v; });
+    if (o.style) song.style = { font: String(o.style.font || ''), chordFont: String(o.style.chordFont || '') };
+    if (o.pfs) ui.pfs = clamp(+o.pfs, 12, 40);
+  } catch (e) {}
+}
+
+/* ---------- toast / popovers / modals ---------- */
+let toastTimer = null;
+function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : ''); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = '', 2400); }
+function closeAllPops() { $$('.pop').forEach(p => p.hidden = true); }
+function openPop(id, anchor, alignRight) {
+  const p = $('#' + id), was = !p.hidden; closeAllPops(); if (was) return;
+  p.hidden = false; const r = anchor.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight;
+  let x = alignRight ? r.right - w : r.left; x = clamp(x, 8, innerWidth - w - 8);
+  let y = r.bottom + 6; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+}
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.pop') && !e.target.closest('#b-font')) closeAllPops(); });
+function openModal(id) { $('#' + id).hidden = false; }
+function closeModal(id) { $('#' + id).hidden = true; }
+document.addEventListener('click', e => { const c = e.target.closest('[data-close]'); if (c) closeModal(c.closest('.modal').id); });
+
+/* ---------- page 1: input ---------- */
+const inTitle = $('#in-title'), inArtist = $('#in-artist'), inCp = $('#in-cp');
+let sumTimer = null;
+function fillFromText() {
+  const t = inCp.value; if (!t.trim()) { $('#in-sum').textContent = ''; return; }
+  const r = textToSong(t);
+  if (!inTitle.value.trim() && r.meta.title) inTitle.value = r.meta.title;
+  if (!inArtist.value.trim() && r.meta.artist) inArtist.value = r.meta.artist;
+  const names = r.sections.map(s => s.name || 'ไม่ระบุ');
+  $('#in-sum').textContent = `${r.sections.length} ท่อน: ${names.join(', ')}`.slice(0, 160) + (r.meta.key ? ' · Key ' + r.meta.key : '');
+}
+inCp.addEventListener('input', () => { clearTimeout(sumTimer); sumTimer = setTimeout(fillFromText, 250); });
+$('#in-open').addEventListener('click', () => $('#in-file').click());
+$('#in-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { inCp.value = await f.text(); fillFromText(); toast('เปิด ' + f.name + ' แล้ว'); }
+  catch (err) { toast('เปิดไฟล์ไม่ได้', true); }
+});
+$('#in-next').addEventListener('click', () => {
+  const t = inCp.value; if (!t.trim()) { toast('วางข้อความ ChordPro หรือเปิดไฟล์ .txt ก่อน', true); return; }
+  const r = textToSong(t);
+  if (!r.sections.some(s => s.lines.some(l => !isEmptyLine(l)))) { toast('อ่านข้อความนี้ไม่ได้', true); return; }
+  song = { title: inTitle.value.trim(), artist: inArtist.value.trim(), key: r.meta.key ? normKey(r.meta.key) : '',
+    meta: Object.assign({ time: '', tempo: '', capo: '', tuning: '' }, r.songMeta), style: song.style, sections: r.sections };
+  ui.transpose = 0;
+  $('#pv-ttl').textContent = [song.title || 'ไม่มีชื่อเพลง', song.artist].filter(Boolean).join(' · ');
+  $('#pg-in').hidden = true; $('#pg-pv').hidden = false; $('#pvscroll').scrollTop = 0;
+  renderPreview();
+});
+$('#pv-back').addEventListener('click', () => { closeAllPops(); $('#pg-pv').hidden = true; $('#pg-in').hidden = false; });
+
+/* ---------- page 2: preview ---------- */
+function renderPreview() {
+  const n = ui.transpose, tk = song.key ? transposeKey(song.key, n) : '';
+  $('#tp-key').textContent = n ? `${tk || 'คีย์'} (${n > 0 ? '+' : ''}${n})` : (song.key ? 'Key ' + song.key : 'Transpose');
+  $('#tp-reset').classList.toggle('hide', !n);
+  $$('#seg-mode button').forEach(b => b.classList.toggle('on', (b.dataset.pmode === 'compact') === ui.compact));
+  pvEl.style.fontSize = ui.pfs + 'px';
+  applySongFonts();
+  pvEl.innerHTML = buildPreview(n);
+}
+const ACT = {
+  'tp-': () => { ui.transpose = ((ui.transpose - 1 + 17) % 12) - 5; renderPreview(); },
+  'tp+': () => { ui.transpose = ((ui.transpose + 1 + 17) % 12) - 5; renderPreview(); },
+  'tp-reset': () => { ui.transpose = 0; renderPreview(); },
+  'pfs-': () => { ui.pfs = clamp(ui.pfs - 1, 12, 40); renderPreview(); saveSettings(); if (!$('#m-img').hidden) updateImgPreview(); },
+  'pfs+': () => { ui.pfs = clamp(ui.pfs + 1, 12, 40); renderPreview(); saveSettings(); if (!$('#m-img').hidden) updateImgPreview(); }
+};
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (a && ACT[a.dataset.act]) { ACT[a.dataset.act](a); return; }
+  const pm = e.target.closest('[data-pmode]'); if (pm) { ui.compact = pm.dataset.pmode === 'compact'; renderPreview(); return; }
+  const lb = e.target.closest('[data-lbl]'); if (lb) { const s = song.sections[+lb.dataset.lbl]; s.showLabel = !labelShown(s); if (s.showLabel === labelDefault(s)) s.showLabel = null; renderPreview(); return; }
+  const ind = e.target.closest('[data-ind]');
+  if (ind) { const [si, d] = ind.dataset.ind.split(':'), s = song.sections[+si]; s.indent = d === 'r' ? null : clamp(sectionIndent(s) + (+d), 0, 3); renderPreview(); }
+});
+pvEl.addEventListener('pointerdown', e => { const s = e.target.closest('.pv-sec'); $$('.pv-sec.touched', pvEl).forEach(x => x !== s && x.classList.remove('touched')); if (s && e.pointerType !== 'mouse') s.classList.add('touched'); });
+
+/* ---------- export ---------- */
+let imgTimer = null;
+function updateImgPreview() {
+  clearTimeout(imgTimer);
+  imgTimer = setTimeout(async () => {
+    await loadSongFonts();
+    $('#img-fs').textContent = ui.pfs;
+    $('#wm-opts').style.opacity = $('#x-wm').checked ? 1 : .45;
+    const r = renderSongImage(imgOpts()), box = $('#img-prev'); box.innerHTML = ''; box.appendChild(r.canvas);
+    $('#img-sub').textContent = `${ui.compact ? 'แบบย่อ' : 'แบบเต็ม'} · ${ui.transpose ? 'คีย์ที่ Transpose' : (song.key ? 'Key ' + song.key : 'ไม่ระบุคีย์')} · ${IMG_W} × ${r.H} px` + (r.scaled ? ' · ภาพยาวมาก จะลดความคมชัดลง' : '');
+  }, 60);
+}
+$('#pv-export').addEventListener('click', () => {
+  closeAllPops();
+  $('#x-capo').disabled = !+song.meta.capo; $('#x-tune').disabled = !song.meta.tuning;
+  openModal('m-img'); updateImgPreview();
+});
+$('#m-img').addEventListener('input', () => { updateImgPreview(); saveSettings(); });
+$('#m-img').addEventListener('change', () => { updateImgPreview(); saveSettings(); });
+let outBlob = null, outUrl = '';
+$('#img-ok').addEventListener('click', async () => {
+  await loadSongFonts();
+  const r = renderSongImage(imgOpts());
+  const url = r.canvas.toDataURL('image/png');
+  outBlob = await new Promise(res => r.canvas.toBlob(res, 'image/png'));
+  if (outUrl) URL.revokeObjectURL(outUrl); outUrl = '';
+  $('#out-img').src = url;                       // data URL: long-press "Save to Photos" works in most viewers
+  closeModal('m-img'); $('#m-out').hidden = false; $('.m-out-scroll').scrollTop = 0;
+  if (r.scaled) toast('เพลงยาวมาก ลดความคมชัดของรูปลงอัตโนมัติ');
+});
+$('#out-close').addEventListener('click', () => { $('#m-out').hidden = true; });
+$('#out-dl').addEventListener('click', () => {
+  if (!outBlob) return;
+  try { download(outBlob, fileBase() + '.png'); toast('บันทึก ' + fileBase() + '.png'); }
+  catch (e) { toast('บันทึกไฟล์ไม่ได้ในแอพนี้ — แตะค้างที่รูปแล้วเลือก “บันทึกไปยังรูปภาพ”', true); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAllPops(); if (!$('#m-out').hidden) $('#m-out').hidden = true; else $$('.modal').forEach(m => m.hidden = true); } });
+
+/* ---------- boot ---------- */
+loadSettings();
+if (online()) { const st = song.style || {}; ensureFont(st.font); ensureFont(st.chordFont); }
+window.__m = { get song() { return song; }, ui };
+
+})();</script>
+</body></html>
